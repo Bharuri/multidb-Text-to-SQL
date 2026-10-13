@@ -10,9 +10,7 @@ __pycache__/
 .ruff_cache/
 .mypy_cache/
 
-# Generated DuckDB files
-databases/
-*.duckdb
+# DuckDB write-ahead logs (temporary)
 *.duckdb.wal
 
 # Query logs
