@@ -1,0 +1,35 @@
+input_dir: data
+database_dir: databases
+
+databases:
+  sample_superstore:
+    physical_mapping: specs/properties/physical_mapping/sample_superstore.yaml
+    semantic_mapping: specs/properties/semantic_mapping/sample_superstore.yaml
+    database_file: databases/sample_superstore.duckdb
+  airbnb:
+    physical_mapping: specs/properties/physical_mapping/airbnb.yaml
+    semantic_mapping: specs/properties/semantic_mapping/airbnb.yaml
+    database_file: databases/airbnb.duckdb
+  netflix_titles:
+    physical_mapping: specs/properties/physical_mapping/netflix_titles.yaml
+    semantic_mapping: specs/properties/semantic_mapping/netflix_titles.yaml
+    database_file: databases/netflix_titles.duckdb
+  _113thCongress:
+    physical_mapping: specs/properties/physical_mapping/_113thCongress.yaml
+    semantic_mapping: specs/properties/semantic_mapping/_113thCongress.yaml
+    database_file: databases/_113thCongress.duckdb
+
+retrieval:
+  default_row_limit: 1000
+  max_prompt_chars: 60000
+  value_list_threshold: 30
+
+llm:
+  provider: bedrock
+  model_id: us.amazon.nova-2-lite-v1:0
+  region: us-east-1
+  temperature: 0
+  max_output_tokens: 2048
+
+logging:
+  file: logs/query.log

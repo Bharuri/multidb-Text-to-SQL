@@ -1,0 +1,222 @@
+database: netflix_titles
+schema: netflix_titles
+database_file: databases/netflix_titles.duckdb
+schema_mapping: specs/properties/physical_mapping/netflix_titles.yaml
+numeric_operators:
+- operator: '>='
+  phrases:
+  - at least {n}
+  - '{n} or more'
+  - minimum {n}
+  template: '{column} >= {value}'
+- operator: '>'
+  phrases:
+  - more than {n}
+  - over {n}
+  - above {n}
+  template: '{column} > {value}'
+- operator: <=
+  phrases:
+  - at most {n}
+  - '{n} or less'
+  - maximum {n}
+  template: '{column} <= {value}'
+- operator: <
+  phrases:
+  - under {n}
+  - less than {n}
+  - below {n}
+  template: '{column} < {value}'
+- operator: '='
+  phrases:
+  - equal to {n}
+  - exactly {n}
+  template: '{column} = {value}'
+- operator: BETWEEN
+  phrases:
+  - between {a} and {b}
+  template: '{column} BETWEEN {low} AND {high}'
+columns:
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles
+  column: date_added
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles
+  column: description
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles
+  column: duration_minutes
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags:
+  - text_numeric
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles
+  column: duration_seasons
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - '1'
+  - '10'
+  - '11'
+  - '12'
+  - '13'
+  - '14'
+  - '15'
+  - '2'
+  - '2017-03-31 00:00:00'
+  - '3'
+  - '4'
+  - '5'
+  - '6'
+  - '7'
+  - '8'
+  - '80188902'
+  - '9'
+  synonyms: []
+  flags:
+  - text_numeric
+  - suspect_value
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles
+  column: rating
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - G
+  - NC-17
+  - NR
+  - PG
+  - PG-13
+  - R
+  - TV-14
+  - TV-G
+  - TV-MA
+  - TV-PG
+  - TV-Y
+  - TV-Y7
+  - TV-Y7-FV
+  - UR
+  synonyms: []
+  flags: []
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles
+  column: release_year
+  data_type: DOUBLE
+  column_class: numeric
+  numeric_rules:
+    min: 1925.0
+    max: 80119194.0
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags:
+  - suspect_range
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles
+  column: show_id
+  data_type: DOUBLE
+  column_class: other
+  synonyms: []
+  flags: []
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles
+  column: title
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles
+  column: type
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - '1944'
+  - Movie
+  - TV Show
+  synonyms: []
+  flags:
+  - suspect_value
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles_cast
+  column: cast
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles_cast
+  column: show_id
+  data_type: BIGINT
+  column_class: other
+  synonyms: []
+  flags: []
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles_category
+  column: listed_in
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles_category
+  column: show_id
+  data_type: BIGINT
+  column_class: other
+  synonyms: []
+  flags: []
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles_countries
+  column: country
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles_countries
+  column: show_id
+  data_type: BIGINT
+  column_class: other
+  synonyms: []
+  flags: []
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles_directors
+  column: director
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: netflix_titles
+  schema: netflix_titles
+  table: netflix_titles_directors
+  column: show_id
+  data_type: BIGINT
+  column_class: other
+  synonyms: []
+  flags: []

@@ -1,0 +1,364 @@
+database: sample_superstore
+schema: sample_superstore
+database_file: databases/sample_superstore.duckdb
+schema_mapping: specs/properties/physical_mapping/sample_superstore.yaml
+numeric_operators:
+- operator: '>='
+  phrases:
+  - at least {n}
+  - '{n} or more'
+  - minimum {n}
+  template: '{column} >= {value}'
+- operator: '>'
+  phrases:
+  - more than {n}
+  - over {n}
+  - above {n}
+  template: '{column} > {value}'
+- operator: <=
+  phrases:
+  - at most {n}
+  - '{n} or less'
+  - maximum {n}
+  template: '{column} <= {value}'
+- operator: <
+  phrases:
+  - under {n}
+  - less than {n}
+  - below {n}
+  template: '{column} < {value}'
+- operator: '='
+  phrases:
+  - equal to {n}
+  - exactly {n}
+  template: '{column} = {value}'
+- operator: BETWEEN
+  phrases:
+  - between {a} and {b}
+  template: '{column} BETWEEN {low} AND {high}'
+columns:
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Category
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - Furniture
+  - Office Supplies
+  - Technology
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: City
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Country_Region
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - Canada
+  - United States
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Customer_ID
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Customer_Name
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Discount
+  data_type: DOUBLE
+  column_class: categorical
+  values:
+  - 0.0
+  - 0.1
+  - 0.15
+  - 0.2
+  - 0.3
+  - 0.32
+  - 0.4
+  - 0.45
+  - 0.5
+  - 0.6
+  - 0.7
+  - 0.8
+  numeric_rules:
+    min: 0.0
+    max: 0.8
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Order_Date
+  data_type: TIMESTAMP
+  column_class: other
+  date_operators:
+  - year
+  - month
+  - year_month
+  - date_between
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Order_ID
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Postal_Code
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Product_ID
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Product_Name
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Profit
+  data_type: DOUBLE
+  column_class: numeric
+  numeric_rules:
+    min: -6599.978000000001
+    max: 8399.975999999999
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Quantity
+  data_type: BIGINT
+  column_class: categorical
+  values:
+  - 1
+  - 2
+  - 3
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
+  - 10
+  - 11
+  - 12
+  - 13
+  - 14
+  numeric_rules:
+    min: 1
+    max: 14
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Region
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - Central
+  - East
+  - South
+  - West
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Row_ID
+  data_type: BIGINT
+  column_class: other
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Sales
+  data_type: DOUBLE
+  column_class: numeric
+  numeric_rules:
+    min: 0.44399999999999995
+    max: 22638.48
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Segment
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - Consumer
+  - Corporate
+  - Home Office
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Ship_Date
+  data_type: TIMESTAMP
+  column_class: other
+  date_operators:
+  - year
+  - month
+  - year_month
+  - date_between
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Ship_Mode
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - First Class
+  - Same Day
+  - Second Class
+  - Standard Class
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: State_Province
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Orders
+  column: Sub_Category
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - Accessories
+  - Appliances
+  - Art
+  - Binders
+  - Bookcases
+  - Chairs
+  - Copiers
+  - Envelopes
+  - Fasteners
+  - Furnishings
+  - Labels
+  - Machines
+  - Paper
+  - Phones
+  - Storage
+  - Supplies
+  - Tables
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: People
+  column: Region
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - Central
+  - East
+  - South
+  - West
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: People
+  column: Regional_Manager
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - Chuck Magee
+  - Fred Suzuki
+  - Roxanne Rodriguez
+  - Sadie Pawthorne
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Returns
+  column: Order_ID
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: sample_superstore
+  schema: sample_superstore
+  table: Returns
+  column: Returned
+  data_type: VARCHAR
+  column_class: boolean
+  values:
+  - 'Yes'
+  true_expressions:
+  - returned
+  - 'true'
+  - 'yes'
+  - y
+  - '1'
+  - 'on'
+  false_expressions:
+  - not returned
+  - 'false'
+  - 'no'
+  - n
+  - '0'
+  - 'off'
+  true_value: 'Yes'
+  false_value: null
+  synonyms: []
+  flags: []

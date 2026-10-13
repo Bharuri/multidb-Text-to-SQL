@@ -1,0 +1,329 @@
+database: _113thCongress
+schema: _113thCongress
+database_file: databases/_113thCongress.duckdb
+schema_mapping: specs/properties/physical_mapping/_113thCongress.yaml
+numeric_operators:
+- operator: '>='
+  phrases:
+  - at least {n}
+  - '{n} or more'
+  - minimum {n}
+  template: '{column} >= {value}'
+- operator: '>'
+  phrases:
+  - more than {n}
+  - over {n}
+  - above {n}
+  template: '{column} > {value}'
+- operator: <=
+  phrases:
+  - at most {n}
+  - '{n} or less'
+  - maximum {n}
+  template: '{column} <= {value}'
+- operator: <
+  phrases:
+  - under {n}
+  - less than {n}
+  - below {n}
+  template: '{column} < {value}'
+- operator: '='
+  phrases:
+  - equal to {n}
+  - exactly {n}
+  template: '{column} = {value}'
+- operator: BETWEEN
+  phrases:
+  - between {a} and {b}
+  template: '{column} BETWEEN {low} AND {high}'
+columns:
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: BillNumber
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Bill_Number
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Body
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - House of Representatives
+  - Senate
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Count
+  data_type: BIGINT
+  column_class: numeric
+  numeric_rules:
+    min: 0
+    max: 230
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Description
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Party
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - Democrats
+  - Republicans
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Question
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Record
+  data_type: BIGINT
+  column_class: other
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Required_for_Majority
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - 2/3 RECORDED VOTE
+  - 2/3 YEA-AND-NAY
+  - '2013-01-02 00:00:00'
+  - '2013-03-05 00:00:00'
+  - '2014-01-02 00:00:00'
+  - '2014-03-05 00:00:00'
+  - RECORDED VOTE
+  - YEA-AND-NAY
+  synonyms: []
+  flags:
+  - suspect_value
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Role_Call_Number
+  data_type: BIGINT
+  column_class: numeric
+  numeric_rules:
+    min: 2
+    max: 641
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Session
+  data_type: BIGINT
+  column_class: categorical
+  values:
+  - 1
+  - 2
+  numeric_rules:
+    min: 1
+    max: 2
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Source_URL
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Total_Abstain
+  data_type: BIGINT
+  column_class: numeric
+  numeric_rules:
+    min: 0
+    max: 84
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Total_No
+  data_type: BIGINT
+  column_class: numeric
+  numeric_rules:
+    min: 0
+    max: 413
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Total_Yes
+  data_type: BIGINT
+  column_class: numeric
+  numeric_rules:
+    min: 2
+    max: 426
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Vote
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - Abstain
+  - 'No'
+  - 'Yes'
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Vote_Date
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Bills
+  column: Vote_Result
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - Agreed to
+  - Amendment Agreed to
+  - Amendment Rejected
+  - Bill Passed
+  - Cloture Motion Agreed to
+  - Cloture Motion Rejected
+  - Cloture on the Motion to Proceed Agreed to
+  - Cloture on the Motion to Proceed Rejected
+  - Concurrent Resolution Agreed to
+  - Conference Report Agreed to
+  - Failed
+  - Joint Resolution Passed
+  - Motion Agreed to
+  - Motion Rejected
+  - Motion for Attendance Agreed to
+  - Motion to Proceed Rejected
+  - Motion to Table Agreed to
+  - Motion to Table Failed
+  - Passed
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Sunlight_Info
+  column: Pages
+  data_type: DOUBLE
+  column_class: numeric
+  numeric_rules:
+    min: 0.0
+    max: 1795.0
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Sunlight_Info
+  column: Source_URL
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Sunlight_Info
+  column: Sponsor_Party
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - D
+  - I
+  - R
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Sunlight_Info
+  column: State
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Sunlight_Info
+  column: committee
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Sunlight_Info
+  column: official_text
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Sunlight_Info
+  column: sponsor
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: _113thCongress
+  schema: _113thCongress
+  table: Sunlight_Info
+  column: sponsor_pic
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []

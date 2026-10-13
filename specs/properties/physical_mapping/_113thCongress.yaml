@@ -1,0 +1,144 @@
+schema: _113thCongress
+database: _113thCongress
+file: databases/_113thCongress.duckdb
+workbook: data/113thCongress.xlsx
+tables:
+- name: Bills
+  source_sheet: Bills
+  row_count: 4410
+  columns:
+  - name: Record
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Vote_Date
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Question
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Bill_Number
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Description
+    type: VARCHAR
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: Role_Call_Number
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Required_for_Majority
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Total_Yes
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Total_No
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Total_Abstain
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Session
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Body
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: BillNumber
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Source_URL
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Vote_Result
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Vote
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Party
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Count
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+- name: Sunlight_Info
+  source_sheet: Sunlight Info
+  row_count: 286
+  columns:
+  - name: Source_URL
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: true
+  - name: official_text
+    type: VARCHAR
+    nullable: true
+    has_nulls: true
+    is_unique: true
+  - name: sponsor
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Sponsor_Party
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: State
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: sponsor_pic
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: committee
+    type: VARCHAR
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: Pages
+    type: DOUBLE
+    nullable: true
+    has_nulls: true
+    is_unique: false
+relationships: []

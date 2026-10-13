@@ -1,0 +1,75 @@
+schema: airbnb
+database: airbnb
+file: databases/airbnb.duckdb
+workbook: data/airbnb.xlsx
+tables:
+- name: AirBnB_NYC
+  source_sheet: AirBnB_NYC
+  row_count: 30478
+  columns:
+  - name: Host_Id
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Host_Since
+    type: TIMESTAMP
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: Name
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Neighbourhood
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Property_Type
+    type: VARCHAR
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: Review_Scores_Rating_bin
+    type: DOUBLE
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: Room_Type
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Zipcode
+    type: DOUBLE
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: Beds
+    type: DOUBLE
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: Number_of_Records
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Number_Of_Reviews
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Price
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Review_Scores_Rating
+    type: DOUBLE
+    nullable: true
+    has_nulls: true
+    is_unique: false
+relationships: []

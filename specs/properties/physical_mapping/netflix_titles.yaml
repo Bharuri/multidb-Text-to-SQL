@@ -1,0 +1,187 @@
+schema: netflix_titles
+database: netflix_titles
+file: databases/netflix_titles.duckdb
+workbook: data/netflix_titles.xlsx
+tables:
+- name: netflix_titles
+  source_sheet: netflix_titles
+  row_count: 6236
+  columns:
+  - name: duration_minutes
+    type: VARCHAR
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: duration_seasons
+    type: VARCHAR
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: type
+    type: VARCHAR
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: title
+    type: VARCHAR
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: date_added
+    type: VARCHAR
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: release_year
+    type: DOUBLE
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: rating
+    type: VARCHAR
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: description
+    type: VARCHAR
+    nullable: true
+    has_nulls: true
+    is_unique: false
+  - name: show_id
+    type: DOUBLE
+    nullable: true
+    has_nulls: true
+    is_unique: true
+- name: netflix_titles_cast
+  source_sheet: netflix_titles_cast
+  row_count: 44311
+  columns:
+  - name: cast
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: show_id
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+- name: netflix_titles_category
+  source_sheet: netflix_titles_category
+  row_count: 13670
+  columns:
+  - name: listed_in
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: show_id
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+- name: netflix_titles_countries
+  source_sheet: netflix_titles_countries
+  row_count: 7179
+  columns:
+  - name: country
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: show_id
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+- name: netflix_titles_directors
+  source_sheet: netflix_titles_directors
+  row_count: 4852
+  columns:
+  - name: director
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: show_id
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+relationships:
+- name: fk_netflix_titles_cast_show_id
+  status: proposed
+  meaning: Each child row is a credit for one title in the parent table.
+  cardinality: many-to-one
+  enforceable_now: false
+  child:
+    table: netflix_titles_cast
+    column: show_id
+  parent:
+    table: netflix_titles
+    column: show_id
+  issues:
+  - 'type mismatch: show_id is BIGINT, show_id is DOUBLE; 10 child row(s) have no matching parent value
+    in show_id'
+  checks:
+  - column: show_id
+    child_type: BIGINT
+    parent_type: DOUBLE
+    orphan_rows: 10
+- name: fk_netflix_titles_category_show_id
+  status: proposed
+  meaning: Each child row is a credit for one title in the parent table.
+  cardinality: many-to-one
+  enforceable_now: false
+  child:
+    table: netflix_titles_category
+    column: show_id
+  parent:
+    table: netflix_titles
+    column: show_id
+  issues:
+  - 'type mismatch: show_id is BIGINT, show_id is DOUBLE; 3 child row(s) have no matching parent value
+    in show_id'
+  checks:
+  - column: show_id
+    child_type: BIGINT
+    parent_type: DOUBLE
+    orphan_rows: 3
+- name: fk_netflix_titles_countries_show_id
+  status: proposed
+  meaning: Each child row is a credit for one title in the parent table.
+  cardinality: many-to-one
+  enforceable_now: false
+  child:
+    table: netflix_titles_countries
+    column: show_id
+  parent:
+    table: netflix_titles
+    column: show_id
+  issues:
+  - 'type mismatch: show_id is BIGINT, show_id is DOUBLE; 2 child row(s) have no matching parent value
+    in show_id'
+  checks:
+  - column: show_id
+    child_type: BIGINT
+    parent_type: DOUBLE
+    orphan_rows: 2
+- name: fk_netflix_titles_directors_show_id
+  status: proposed
+  meaning: Each child row is a credit for one title in the parent table.
+  cardinality: many-to-one
+  enforceable_now: false
+  child:
+    table: netflix_titles_directors
+    column: show_id
+  parent:
+    table: netflix_titles
+    column: show_id
+  issues:
+  - 'type mismatch: show_id is BIGINT, show_id is DOUBLE; 2 child row(s) have no matching parent value
+    in show_id'
+  checks:
+  - column: show_id
+    child_type: BIGINT
+    parent_type: DOUBLE
+    orphan_rows: 2

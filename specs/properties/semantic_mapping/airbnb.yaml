@@ -1,0 +1,241 @@
+database: airbnb
+schema: airbnb
+database_file: databases/airbnb.duckdb
+schema_mapping: specs/properties/physical_mapping/airbnb.yaml
+numeric_operators:
+- operator: '>='
+  phrases:
+  - at least {n}
+  - '{n} or more'
+  - minimum {n}
+  template: '{column} >= {value}'
+- operator: '>'
+  phrases:
+  - more than {n}
+  - over {n}
+  - above {n}
+  template: '{column} > {value}'
+- operator: <=
+  phrases:
+  - at most {n}
+  - '{n} or less'
+  - maximum {n}
+  template: '{column} <= {value}'
+- operator: <
+  phrases:
+  - under {n}
+  - less than {n}
+  - below {n}
+  template: '{column} < {value}'
+- operator: '='
+  phrases:
+  - equal to {n}
+  - exactly {n}
+  template: '{column} = {value}'
+- operator: BETWEEN
+  phrases:
+  - between {a} and {b}
+  template: '{column} BETWEEN {low} AND {high}'
+columns:
+- database: airbnb
+  schema: airbnb
+  table: AirBnB_NYC
+  column: Beds
+  data_type: DOUBLE
+  column_class: categorical
+  values:
+  - 0.0
+  - 1.0
+  - 2.0
+  - 3.0
+  - 4.0
+  - 5.0
+  - 6.0
+  - 7.0
+  - 8.0
+  - 9.0
+  - 10.0
+  - 11.0
+  - 12.0
+  - 16.0
+  numeric_rules:
+    min: 0.0
+    max: 16.0
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: airbnb
+  schema: airbnb
+  table: AirBnB_NYC
+  column: Host_Id
+  data_type: BIGINT
+  column_class: other
+  synonyms: []
+  flags: []
+- database: airbnb
+  schema: airbnb
+  table: AirBnB_NYC
+  column: Host_Since
+  data_type: TIMESTAMP
+  column_class: other
+  date_operators:
+  - year
+  - month
+  - year_month
+  - date_between
+  synonyms: []
+  flags: []
+- database: airbnb
+  schema: airbnb
+  table: AirBnB_NYC
+  column: Name
+  data_type: VARCHAR
+  column_class: other
+  synonyms: []
+  flags: []
+- database: airbnb
+  schema: airbnb
+  table: AirBnB_NYC
+  column: Neighbourhood
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - Bronx
+  - Brooklyn
+  - Manhattan
+  - Queens
+  - Staten Island
+  synonyms: []
+  flags: []
+- database: airbnb
+  schema: airbnb
+  table: AirBnB_NYC
+  column: Number_Of_Reviews
+  data_type: BIGINT
+  column_class: numeric
+  numeric_rules:
+    min: 0
+    max: 257
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: airbnb
+  schema: airbnb
+  table: AirBnB_NYC
+  column: Number_of_Records
+  data_type: BIGINT
+  column_class: categorical
+  values:
+  - 1
+  numeric_rules:
+    min: 1
+    max: 1
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: airbnb
+  schema: airbnb
+  table: AirBnB_NYC
+  column: Price
+  data_type: BIGINT
+  column_class: numeric
+  numeric_rules:
+    min: 10
+    max: 10000
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: airbnb
+  schema: airbnb
+  table: AirBnB_NYC
+  column: Property_Type
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - Apartment
+  - Bed & Breakfast
+  - Boat
+  - Bungalow
+  - Cabin
+  - Camper/RV
+  - Castle
+  - Chalet
+  - Condominium
+  - Dorm
+  - House
+  - Hut
+  - Lighthouse
+  - Loft
+  - Other
+  - Tent
+  - Townhouse
+  - Treehouse
+  - Villa
+  synonyms: []
+  flags: []
+- database: airbnb
+  schema: airbnb
+  table: AirBnB_NYC
+  column: Review_Scores_Rating
+  data_type: DOUBLE
+  column_class: numeric
+  numeric_rules:
+    min: 20.0
+    max: 100.0
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: airbnb
+  schema: airbnb
+  table: AirBnB_NYC
+  column: Review_Scores_Rating_bin
+  data_type: DOUBLE
+  column_class: categorical
+  values:
+  - 20.0
+  - 30.0
+  - 40.0
+  - 45.0
+  - 50.0
+  - 55.0
+  - 60.0
+  - 65.0
+  - 70.0
+  - 75.0
+  - 80.0
+  - 85.0
+  - 90.0
+  - 95.0
+  - 100.0
+  numeric_rules:
+    min: 20.0
+    max: 100.0
+    null_matches: false
+    between_bounds: inclusive
+  synonyms: []
+  flags: []
+- database: airbnb
+  schema: airbnb
+  table: AirBnB_NYC
+  column: Room_Type
+  data_type: VARCHAR
+  column_class: categorical
+  values:
+  - Entire home/apt
+  - Private room
+  - Shared room
+  synonyms: []
+  flags: []
+- database: airbnb
+  schema: airbnb
+  table: AirBnB_NYC
+  column: Zipcode
+  data_type: DOUBLE
+  column_class: other
+  synonyms: []
+  flags: []

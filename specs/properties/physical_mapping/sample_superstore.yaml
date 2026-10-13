@@ -1,0 +1,178 @@
+schema: sample_superstore
+database: sample_superstore
+file: databases/sample_superstore.duckdb
+workbook: data/sample_-_superstore.xls
+tables:
+- name: Orders
+  source_sheet: Orders
+  row_count: 10194
+  columns:
+  - name: Row_ID
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: true
+  - name: Order_ID
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Order_Date
+    type: TIMESTAMP
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Ship_Date
+    type: TIMESTAMP
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Ship_Mode
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Customer_ID
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Customer_Name
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Segment
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Country_Region
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: City
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: State_Province
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Postal_Code
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Region
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Product_ID
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Category
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Sub_Category
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Product_Name
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Sales
+    type: DOUBLE
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Quantity
+    type: BIGINT
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Discount
+    type: DOUBLE
+    nullable: true
+    has_nulls: false
+    is_unique: false
+  - name: Profit
+    type: DOUBLE
+    nullable: true
+    has_nulls: false
+    is_unique: false
+- name: People
+  source_sheet: People
+  row_count: 4
+  columns:
+  - name: Regional_Manager
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: true
+  - name: Region
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: true
+- name: Returns
+  source_sheet: Returns
+  row_count: 296
+  columns:
+  - name: Order_ID
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: true
+  - name: Returned
+    type: VARCHAR
+    nullable: true
+    has_nulls: false
+    is_unique: false
+relationships:
+- name: fk_returns_order_id
+  status: proposed
+  meaning: Each return refers to an order ID. Orders has one row per line item, so Order_ID repeats.
+  cardinality: many-to-one
+  enforceable_now: false
+  child:
+    table: Returns
+    column: Order_ID
+  parent:
+    table: Orders
+    column: Order_ID
+  issues:
+  - parent column Order_ID is not unique
+  checks:
+  - column: Order_ID
+    child_type: VARCHAR
+    parent_type: VARCHAR
+    orphan_rows: 0
+- name: fk_orders_region
+  status: proposed
+  meaning: Each order line belongs to one regional manager region listed in People.
+  cardinality: many-to-one
+  enforceable_now: true
+  child:
+    table: Orders
+    column: Region
+  parent:
+    table: People
+    column: Region
+  issues: []
+  checks:
+  - column: Region
+    child_type: VARCHAR
+    parent_type: VARCHAR
+    orphan_rows: 0
