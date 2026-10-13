@@ -17,3 +17,22 @@ databases/
 
 # Query logs
 logs/
+
+# Source spreadsheets (local only)
+data/
+
+# Credentials and secrets
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.pfx
+credentials
+credentials.*
+aws_credentials*
+.aws/
+secrets.*
+*secret*.yaml
+*secret*.yml
+*secret*.json
