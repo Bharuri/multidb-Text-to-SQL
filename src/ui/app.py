@@ -10,11 +10,14 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from src.query.catalog import resolve  # noqa: E402
+from src.query.executor import ExecuteError, run_manual_sql  # noqa: E402
 from src.query.pipeline import (  # noqa: E402
     STAGE_NAMES,
     Credentials,
     Request,
     StageResult,
+    _default_row_limit,
     database_names,
     final_status,
     run,
@@ -58,12 +61,12 @@ def ok_output(trace: list[StageResult], name: str) -> dict | None:
 def render_answer(slot, trace: list[StageResult]) -> None:
     """Final SQL and result, shown under the Ask button. Stage panels live in the Step plan tab."""
     with slot.container():
-        built = ok_output(trace, "build_sql")
-        if built:
+        generated = ok_output(trace, "sql_generate")
+        if generated:
             st.subheader("SQL")
-            st.code(built["sql"], language="sql")
-            if built["params"]:
-                st.caption(f"Parameters: {built['params']}")
+            st.code(generated["sql"], language="sql")
+            if generated["params"]:
+                st.caption(f"Parameters: {generated['params']}")
         executed = ok_output(trace, "execute")
         if executed is not None:
             st.subheader("Result")
@@ -107,7 +110,30 @@ with plan_tab:
     slots = {name: st.empty() for name in STAGE_NAMES}
 
 with sql_tab:
-    st.info("Run SQL is not connected in this stub build.")
+    manual_sql = st.text_area(
+        "SQL",
+        placeholder="SELECT \"Category\", COUNT(*) FROM sample_superstore.sample_superstore.\"Orders\" GROUP BY 1",
+        help="One read-only SELECT or WITH statement. Table names are schema.schema.table, as in the catalog.",
+    )
+    run_sql_clicked = st.button("Run SQL")
+    sql_answer_slot = st.container()
+
+if run_sql_clicked:
+    with sql_answer_slot:
+        try:
+            manual_result = run_manual_sql(manual_sql, resolve(database).db_file, _default_row_limit())
+        except ExecuteError as error:
+            st.error(error.message)
+        else:
+            if manual_result["rows"]:
+                st.dataframe(
+                    [dict(zip(manual_result["columns"], row)) for row in manual_result["rows"]],
+                    hide_index=True,
+                )
+            else:
+                st.info("The query returned no rows.")
+            if manual_result["truncated"]:
+                st.caption(f"Showing the first {manual_result['row_count']} rows. The query matched more.")
 
 if ask_clicked:
     question_text = question.strip()
@@ -118,19 +144,24 @@ if ask_clicked:
     else:
         for name in STAGE_NAMES:
             render_waiting(slots[name], name)
-        reply_parts: list[str] = []
+        planner_parts: list[str] = []
+        sql_parts: list[str] = []
 
-        def show_chunk(text: str) -> None:
-            reply_parts.append(text)
-            with slots["llm"].container():
-                st.caption("4. llm: streaming")
-                st.code("".join(reply_parts), language="json")
+        def stream_into(name: str, parts: list[str]):
+            def show(text: str) -> None:
+                parts.append(text)
+                with slots[name].container():
+                    st.caption(f"{stage_number(name)}. {name}: streaming")
+                    st.code("".join(parts), language="json" if name == "llm" else "sql")
+
+            return show
 
         request = Request(
             database=database,
             question=question_text,
             credentials=credentials_from_form(access_key_id, secret_access_key, session_token),
-            on_chunk=show_chunk,
+            on_chunk=stream_into("llm", planner_parts),
+            on_sql_chunk=stream_into("sql_generate", sql_parts),
         )
         trace = run(request, on_stage_done=lambda result: render_stage(slots[result.stage], result))
         st.session_state[TRACE] = trace

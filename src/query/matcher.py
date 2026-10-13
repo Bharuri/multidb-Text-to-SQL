@@ -8,15 +8,19 @@ import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import date
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from src.query.catalog import Resolved
+from src.query.shapes import CALCULATION_TYPES, DATE_GRAINS, METRIC_FUNCTIONS, SORT_DIRECTIONS
 
-AGGREGATE_FUNCTIONS = ("COUNT", "SUM", "AVG", "MIN", "MAX")
+if TYPE_CHECKING:
+    from src.query.business_semantics import BusinessSemantics
+
 NUMERIC_AGGREGATES = ("SUM", "AVG", "MIN", "MAX")
 DATE_PREFIXES = ("DATE", "TIMESTAMP")
 MAX_CLOSEST = 3
 ISO_DATE = re.compile(r"\d{4}-\d{2}-\d{2}")
+ALIAS = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,63}")
 
 # Returns the stored values that equal the text ignoring case. Used only for columns with no stored value list.
 ValueLookup = Callable[[str, str, str], list[str]]
@@ -94,13 +98,13 @@ def _value_candidates(meta: dict[str, Any]) -> list[_Candidate]:
     return [_Candidate(value, tuple(synonyms)) for value, synonyms in words.items()]
 
 
-def _canonical(raw: Any, allowed: Sequence[Any]) -> str:
+def _canonical(raw: Any, allowed: Sequence[Any], label: str = "operator") -> str:
     if isinstance(raw, str):
         wanted = raw.strip().lower()
         for option in allowed:
             if str(option).lower() == wanted:
                 return str(option)
-    raise _ItemError(f"operator {raw!r} is not allowed here. Allowed: {', '.join(map(str, allowed)) or 'none'}")
+    raise _ItemError(f"{label} {raw!r} is not allowed here. Allowed: {', '.join(map(str, allowed)) or 'none'}")
 
 
 def _number(raw: Any, column: str) -> int | float:
@@ -167,9 +171,17 @@ def _limit(raw: Any) -> int:
 
 
 class _PlanMatcher:
-    def __init__(self, resolved: Resolved, lookup: ValueLookup | None) -> None:
+    def __init__(
+        self,
+        resolved: Resolved,
+        lookup: ValueLookup | None,
+        business: BusinessSemantics | None,
+        capabilities: dict[str, bool] | None,
+    ) -> None:
         physical, semantic = resolved.physical, resolved.semantic
         self.lookup = lookup
+        self.business = business
+        self.capabilities = capabilities
         self.tables = [table["name"] for table in physical["tables"]]
         self.columns = {table["name"]: [col["name"] for col in table["columns"]] for table in physical["tables"]}
         self.meta = {(col["table"], col["column"]): col for col in semantic.get("columns") or []}
@@ -183,38 +195,144 @@ class _PlanMatcher:
         table = self._attempt("table", self._table, plan.get("table"))
         if table is None:
             raise MatchError(self.reasons)
+        if plan.get("repeat_purchase") is not None:
+            return self._repeat(plan, table)
 
-        raw_aggregation = plan.get("aggregation")
-        if raw_aggregation is None:
-            select = self._select(plan.get("select"), table)
-            aggregation = None
-        else:
+        metrics = self._list("metrics", plan.get("metrics"), self._metric, table)
+        aggregate = bool(metrics)
+        aliases = [metric["alias"] for metric in metrics if metric]
+        for alias in sorted({alias for alias in aliases if aliases.count(alias) > 1}):
+            self.reasons.append(f"metrics: alias '{alias}' is used more than once")
+
+        dimensions: list[Any] = []
+        select: list[str] = []
+        if aggregate:
             if plan.get("select"):
-                self.reasons.append("select: cannot be used together with an aggregation")
-            select = []
-            aggregation = self._attempt("aggregation", self._aggregation, raw_aggregation, table)
-
-        raw_filters = plan.get("filters") or []
-        if isinstance(raw_filters, list):
-            filters = [self._attempt(f"filters[{i}]", self._filter, item, table) for i, item in enumerate(raw_filters)]
+                self.reasons.append("select: cannot be used together with metrics; use dimensions instead")
+            dimensions = self._list("dimensions", plan.get("dimensions"), self._column, table)
         else:
-            self.reasons.append("filters: must be a list")
-            filters = []
+            if plan.get("dimensions"):
+                self.reasons.append("dimensions: need at least one metric")
+            select = self._select(plan.get("select"), table)
+        dimension_names = [name for name in dimensions if name]
+        for alias in aliases:
+            if alias in dimension_names:
+                self.reasons.append(f"metrics: alias '{alias}' is also a dimension name")
+
+        filters = self._list("filters", plan.get("filters"), self._filter, table)
+
+        group_by: list[Any] = []
+        having: list[Any] = []
+        calculations: list[Any] = []
+        if aggregate:
+            group_by = self._list("group_by", plan.get("group_by"), self._column, table)
+            having = self._list("having", plan.get("having"), self._having, aliases)
+            calculations = self._list("calculations", plan.get("calculations"), self._calculation, table, aliases)
+            if None not in group_by and None not in dimensions and sorted(group_by) != sorted(dimensions):
+                self.reasons.append("group_by: must list the same columns as dimensions")
+        else:
+            for key in ("group_by", "having", "calculations"):
+                if plan.get(key):
+                    self.reasons.append(f"{key}: needs at least one metric")
+
+        outputs = dimension_names if aggregate else [name for name in select if name]
+        order_by: list[Any] = []
+        if aggregate and not dimensions and plan.get("order_by"):
+            self.reasons.append("order_by: a single-value aggregate has nothing to order")
+        else:
+            order_by = self._list("order_by", plan.get("order_by"), self._order_by, table, aliases, outputs)
 
         limit = None
         if plan.get("limit") is not None:
             limit = self._attempt("limit", _limit, plan.get("limit"))
+            if aggregate and not dimensions and limit is not None:
+                self.reasons.append("limit: a single-value aggregate has no limit")
 
+        self._check_features(group_by, having, order_by, calculations)
         if self.reasons:
             raise MatchError(self.reasons)
         return {
             "table": table,
             "select": select,
-            "aggregation": aggregation,
+            "dimensions": dimensions,
+            "metrics": metrics,
             "filters": filters,
+            "group_by": group_by,
+            "having": having,
+            "order_by": order_by,
+            "calculations": calculations,
             "limit": limit,
+            "repeat_purchase": None,
             "matches": self.matches,
         }
+
+    def _repeat(self, plan: dict[str, Any], table: str) -> dict[str, Any]:
+        """A repeat-purchase question is one fixed analysis, so no other plan part may be used with it."""
+        for key in ("select", "metrics", "dimensions", "filters", "group_by", "having", "order_by", "calculations"):
+            if plan.get(key):
+                self.reasons.append(f"{key}: cannot be used with repeat_purchase")
+        if plan.get("limit") is not None:
+            self.reasons.append("limit: cannot be used with repeat_purchase")
+        repeat = self._attempt("repeat_purchase", self._repeat_columns, plan["repeat_purchase"], table)
+        if self.reasons:
+            raise MatchError(self.reasons)
+        return {
+            "table": table,
+            "select": [],
+            "dimensions": [],
+            "metrics": [],
+            "filters": [],
+            "group_by": [],
+            "having": [],
+            "order_by": [],
+            "calculations": [],
+            "limit": None,
+            "repeat_purchase": repeat,
+            "matches": self.matches,
+        }
+
+    def _repeat_columns(self, raw: Any, table: str) -> dict[str, Any]:
+        if not isinstance(raw, dict):
+            raise _ItemError("must be an object with customer, date and dimension")
+        customer = self._column(raw.get("customer"), table)
+        date_column = self._column(raw.get("date"), table)
+        if not _is_date(self.meta_of(table, date_column)):
+            raise _ItemError(f"date {date_column} is not a date column")
+        dimension = raw.get("dimension")
+        if dimension is not None:
+            dimension = self._column(dimension, table)
+            if dimension in (customer, date_column):
+                raise _ItemError("dimension must be different from the customer and date columns")
+        return {"customer": customer, "date": date_column, "dimension": dimension}
+
+    def _check_features(self, group_by: list[Any], having: list[Any], order_by: list[Any], calculations: list[Any]) -> None:
+        if self.capabilities is None:
+            return
+        used = [
+            ("group_by", group_by),
+            ("having", having),
+            ("order_by", order_by),
+            ("calculations", calculations),
+            ("date_grains", [calc for calc in calculations if calc and calc.get("grain")]),
+        ]
+        for flag, items in used:
+            if items and not self.capabilities.get(flag, False):
+                self.reasons.append(f"{flag}: is turned off in config.yaml capabilities")
+
+    def _list(self, label: str, raw: Any, fn: Callable[..., Any], *args: Any) -> list[Any]:
+        if raw is None:
+            return []
+        if not isinstance(raw, list):
+            self.reasons.append(f"{label}: must be a list")
+            return []
+        return [self._attempt(f"{label}[{i}]", fn, item, *args) for i, item in enumerate(raw)]
+
+    def _alias(self, raw: Any, aliases: Sequence[str], label: str) -> str:
+        if not isinstance(raw, str):
+            raise _ItemError(f"{label} must be text, got {raw!r}")
+        name, source = _pick(raw, f"{label} alias", [_Candidate(alias) for alias in aliases])
+        self.record(raw, "alias", name, source)
+        return name
 
     def record(self, item: Any, kind: str, result: Any, source: str) -> None:
         self.matches.append({"item": item, "kind": kind, "result": result, "source": source})
@@ -257,27 +375,87 @@ class _PlanMatcher:
         return name
 
     def _synonyms(self, table: str, column: str) -> tuple[str, ...]:
-        return tuple(str(word) for word in self.meta_of(table, column).get("synonyms") or [])
+        words = [str(word) for word in self.meta_of(table, column).get("synonyms") or []]
+        if self.business is not None:
+            words += self.business.synonyms_for(table, column)
+        return tuple(words)
 
-    def _aggregation(self, raw: Any, table: str) -> dict[str, str]:
+    def _metric(self, raw: Any, table: str) -> dict[str, Any]:
         if not isinstance(raw, dict):
-            raise _ItemError("must be an object with function and column")
+            raise _ItemError("must be an object with function, column and alias")
         function = raw.get("function")
-        if not isinstance(function, str) or function.upper() not in AGGREGATE_FUNCTIONS:
-            raise _ItemError(f"function {function!r} is not allowed. Allowed: {', '.join(AGGREGATE_FUNCTIONS)}")
+        if not isinstance(function, str) or function.upper() not in METRIC_FUNCTIONS:
+            raise _ItemError(f"function {function!r} is not allowed. Allowed: {', '.join(METRIC_FUNCTIONS)}")
         function = function.upper()
         self.record(function, "aggregation", function, "allowed list")
 
+        alias = raw.get("alias")
+        if not isinstance(alias, str) or not ALIAS.fullmatch(alias):
+            raise _ItemError(f"alias {alias!r} must start with a letter or underscore and use only letters, digits and underscores")
+        self.record(alias, "alias", alias, "rule")
+
         target = raw.get("column")
+        where = raw.get("where")
+        if function == "SHARE":
+            return self._share(target, where, table, alias)
+        if where is not None:
+            raise _ItemError("where is only allowed with the SHARE function")
         if target == "*":
             if function != "COUNT":
                 raise _ItemError(f"{function} needs a column, '*' is only for COUNT")
             self.record("*", "aggregation", "*", "rule")
-            return {"function": function, "column": "*"}
+            return {"function": function, "column": "*", "alias": alias}
         column = self._column(target, table)
         if function in NUMERIC_AGGREGATES and not _is_numeric(self.meta_of(table, column)):
             raise _ItemError(f"{function} needs a numeric column, but {column} is not numeric")
-        return {"function": function, "column": column}
+        return {"function": function, "column": column, "alias": alias}
+
+    def _share(self, target: Any, raw_where: Any, table: str, alias: str) -> dict[str, Any]:
+        """SHARE is the fraction of rows that match every where filter. It counts rows, so its column is '*'."""
+        if target != "*":
+            raise _ItemError("SHARE counts rows, so its column must be '*'")
+        if not isinstance(raw_where, list) or not raw_where:
+            raise _ItemError("SHARE needs a non-empty where list of filters")
+        conditions = [self._attempt(f"where[{i}]", self._filter, item, table) for i, item in enumerate(raw_where)]
+        if None in conditions:
+            raise _ItemError("a where filter does not match the metadata")
+        self.record("*", "aggregation", "*", "rule")
+        return {"function": "SHARE", "column": "*", "alias": alias, "where": conditions}
+
+    def _having(self, raw: Any, aliases: Sequence[str]) -> dict[str, Any]:
+        if not isinstance(raw, dict):
+            raise _ItemError("must be an object with metric, operator and value")
+        metric = self._alias(raw.get("metric"), aliases, "metric")
+        operator = _canonical(raw.get("operator"), self.numeric_ops)
+        self.record(raw.get("operator"), "operator", operator, "allowed list")
+        value = _numeric_value(operator, raw.get("value"), metric)
+        return {"metric": metric, "operator": operator, "value": value}
+
+    def _order_by(self, raw: Any, table: str, aliases: Sequence[str], outputs: Sequence[str]) -> dict[str, str]:
+        if not isinstance(raw, dict):
+            raise _ItemError("must be an object with ref and direction")
+        ref = raw.get("ref")
+        if not isinstance(ref, str):
+            raise _ItemError(f"ref must be text, got {ref!r}")
+        candidates = [_Candidate(alias) for alias in aliases]
+        candidates += [_Candidate(name, self._synonyms(table, name)) for name in outputs]
+        name, source = _pick(ref, "output column or metric alias", candidates)
+        self.record(ref, "output", name, source)
+        direction = _canonical(raw.get("direction"), SORT_DIRECTIONS, "direction")
+        return {"ref": name, "direction": direction}
+
+    def _calculation(self, raw: Any, table: str, aliases: Sequence[str]) -> dict[str, Any]:
+        if not isinstance(raw, dict):
+            raise _ItemError("must be an object with type, metric, date_column, grain and year")
+        kind = _canonical(raw.get("type"), CALCULATION_TYPES, "calculation type")
+        metric = self._alias(raw.get("metric"), aliases, "metric")
+        column = self._column(raw.get("date_column"), table)
+        if not _is_date(self.meta_of(table, column)):
+            raise _ItemError(f"date_column {column} is not a date column")
+        grain = _canonical(raw.get("grain"), DATE_GRAINS, "grain")
+        year = _whole(raw.get("year"), f"year for {column}", 1, 9999)
+        self.record(kind, "calculation", kind, "allowed list")
+        return {"type": kind, "metric": metric, "date_column": column, "grain": grain, "year": year}
 
     def _filter(self, raw: Any, table: str) -> dict[str, Any]:
         if not isinstance(raw, dict):
@@ -318,6 +496,15 @@ class _PlanMatcher:
         raise _ItemError(f"'{raw}' matches more than one value of {column}: {', '.join(found)}")
 
 
-def match_plan(plan: Any, resolved: Resolved, lookup: ValueLookup | None = None) -> dict[str, Any]:
-    """Return the matched plan. Raise MatchError with every problem found when any item fails to match."""
-    return _PlanMatcher(resolved, lookup).run(plan)
+def match_plan(
+    plan: Any,
+    resolved: Resolved,
+    lookup: ValueLookup | None = None,
+    business: BusinessSemantics | None = None,
+    capabilities: dict[str, bool] | None = None,
+) -> dict[str, Any]:
+    """Return the matched plan. Raise MatchError with every problem found when any item fails to match.
+
+    When capabilities is given, features turned off in it reject the plan. None disables that check.
+    """
+    return _PlanMatcher(resolved, lookup, business, capabilities).run(plan)

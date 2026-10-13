@@ -34,11 +34,12 @@ def build_project(root: Path, physical_file: str = "databases/demo.duckdb", sema
         root / "specs" / "physical" / "demo.yaml",
         {
             "database": "demo",
+            "schema": "demo",
             "file": physical_file,
             "tables": [{"name": "Orders", "columns": [{"name": "a"}, {"name": "b"}]}],
         },
     )
-    write_yaml(root / "specs" / "semantic" / "demo.yaml", {"database": "demo", "database_file": semantic_file})
+    write_yaml(root / "specs" / "semantic" / "demo.yaml", {"database": "demo", "schema": "demo", "database_file": semantic_file})
 
 
 class ResolveRealRegistryTests(unittest.TestCase):
@@ -98,6 +99,52 @@ class ResolveFakeProjectTests(unittest.TestCase):
         with self.assertRaisesRegex(CatalogError, "physical file"):
             resolve("demo", root=self.root)
 
+    def test_wrong_database_key_is_an_error(self):
+        build_project(self.root)
+        write_yaml(self.root / "specs" / "semantic" / "demo.yaml", {"database": "other", "schema": "demo", "database_file": "databases/demo.duckdb"})
+        with self.assertRaisesRegex(CatalogError, "Schema key mismatch for demo: semantic mapping database is other"):
+            resolve("demo", root=self.root)
+
+    def test_schema_key_mismatch_is_an_error(self):
+        build_project(self.root)
+        physical = self.root / "specs" / "physical" / "demo.yaml"
+        data = yaml.safe_load(physical.read_text(encoding="utf-8"))
+        write_yaml(physical, data)
+        write_yaml(self.root / "specs" / "semantic" / "demo.yaml", {"database": "demo", "schema": "other", "database_file": "databases/demo.duckdb"})
+        with self.assertRaisesRegex(CatalogError, "semantic schema is other"):
+            resolve("demo", root=self.root)
+
+    def test_malformed_yaml_is_a_catalog_error(self):
+        build_project(self.root)
+        (self.root / "specs" / "semantic" / "demo.yaml").write_text("database: [unclosed\n", encoding="utf-8")
+        with self.assertRaisesRegex(CatalogError, "Cannot read demo.yaml"):
+            resolve("demo", root=self.root)
+
+    def test_top_level_list_is_a_catalog_error(self):
+        build_project(self.root)
+        write_yaml(self.root / "specs" / "physical" / "demo.yaml", ["not", "a", "mapping"])
+        with self.assertRaisesRegex(CatalogError, "top level must be a mapping"):
+            resolve("demo", root=self.root)
+
+    def test_duplicate_table_is_an_error(self):
+        build_project(self.root)
+        physical = self.root / "specs" / "physical" / "demo.yaml"
+        data = yaml.safe_load(physical.read_text(encoding="utf-8"))
+        data["tables"].append({"name": "Orders", "columns": [{"name": "c"}]})
+        write_yaml(physical, data)
+        write_yaml(self.root / "specs" / "semantic" / "demo.yaml", {"database": "demo", "schema": "demo", "database_file": "databases/demo.duckdb"})
+        with self.assertRaisesRegex(CatalogError, "duplicate table Orders"):
+            resolve("demo", root=self.root)
+
+    def test_column_without_name_is_an_error(self):
+        build_project(self.root)
+        physical = self.root / "specs" / "physical" / "demo.yaml"
+        data = yaml.safe_load(physical.read_text(encoding="utf-8"))
+        data["tables"][0]["columns"].append({"type": "BIGINT"})
+        write_yaml(physical, data)
+        write_yaml(self.root / "specs" / "semantic" / "demo.yaml", {"database": "demo", "schema": "demo", "database_file": "databases/demo.duckdb"})
+        with self.assertRaisesRegex(CatalogError, "every column in Orders needs a text name"):
+            resolve("demo", root=self.root)
     def test_changed_file_reloads(self):
         build_project(self.root)
         self.assertEqual(resolve("demo", root=self.root).table_count, 1)
@@ -107,6 +154,7 @@ class ResolveFakeProjectTests(unittest.TestCase):
             physical,
             {
                 "database": "demo",
+                "schema": "demo",
                 "file": "databases/demo.duckdb",
                 "tables": [
                     {"name": "Orders", "columns": [{"name": "a"}]},

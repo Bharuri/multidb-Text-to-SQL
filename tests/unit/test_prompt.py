@@ -89,5 +89,47 @@ class PromptThresholdTests(unittest.TestCase):
         self.assertNotIn("v0", text)
 
 
+class PromptContractTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.resolved = resolve("sample_superstore")
+
+    def test_rules_name_every_plan_key(self) -> None:
+        text = build_prompt("q", self.resolved, 60000, 30)
+        for key in ("dimensions", "metrics", "group_by", "having", "order_by", "calculations", "limit"):
+            self.assertIn(f'"{key}"', text)
+        self.assertNotIn('"aggregation"', text)
+
+    def test_rules_describe_share_metric_and_loss_definition(self) -> None:
+        text = build_prompt("q", self.resolved, 60000, 30)
+        self.assertIn('"function": "SHARE"', text)
+        self.assertIn('"where"', text)
+        self.assertIn("loss = Orders.Profit < 0", text)
+
+    def test_rules_no_longer_refuse_grouping_or_sorting(self) -> None:
+        text = build_prompt("q", self.resolved, 60000, 30)
+        self.assertNotIn("GROUP BY, ORDER BY, a join", text)
+        self.assertIn("Joins and anything not in the metadata are not supported", text)
+
+    def test_business_definitions_are_included_when_given(self) -> None:
+        text = build_prompt("q", self.resolved, 60000, 30, business_definitions="Phone sales: Sales where Sub_Category = Phones")
+        self.assertIn("Business definitions:\nPhone sales: Sales where Sub_Category = Phones", text)
+
+    def test_no_business_section_when_none_given(self) -> None:
+        text = build_prompt("q", self.resolved, 60000, 30)
+        self.assertNotIn("Business definitions:", text)
+
+    def test_prompt_names_only_the_selected_database(self) -> None:
+        text = build_prompt("q", self.resolved, 60000, 30)
+        self.assertIn("Database: sample_superstore", text)
+        self.assertNotIn("Database: airbnb", text)
+        self.assertNotIn("netflix_titles", text)
+
+    def test_business_text_counts_toward_the_limit(self) -> None:
+        base = build_prompt("q", self.resolved, 60000, 30)
+        with self.assertRaises(PromptError):
+            build_prompt("q", self.resolved, len(base), 30, business_definitions="x" * 10)
+
+
 if __name__ == "__main__":
     unittest.main()

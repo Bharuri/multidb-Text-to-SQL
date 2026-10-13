@@ -1,0 +1,26 @@
+database: sample_superstore
+concepts:
+  - name: revenue
+    table: Orders
+    column: Sales
+    synonyms:
+      - sales
+      - turnover
+    description: Gross sales amount of an order line.
+  - name: profit
+    table: Orders
+    column: Profit
+    synonyms:
+      - earnings
+    description: Profit of an order line after costs.
+  - name: region
+    table: Orders
+    column: Region
+    description: Sales region of the customer.
+definitions:
+  - name: loss
+    table: Orders
+    column: Profit
+    operator: "<"
+    value: 0
+    description: An order line that lost money. Use as a SHARE where filter to count loss-making lines.

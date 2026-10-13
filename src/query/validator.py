@@ -12,10 +12,15 @@ import duckdb
 
 from src.query.catalog import Resolved
 from src.query.matcher import ValueLookup, _is_date, _is_numeric
+from src.query.sql_builder import build_sql
 
-ALLOWED_CLASSES = frozenset({"FUNCTION", "COLUMN_REF", "CONSTANT", "PARAMETER", "COMPARISON", "CONJUNCTION", "BETWEEN", "CAST"})
 AGGREGATE_NAMES = frozenset({"count", "count_star", "sum", "avg", "min", "max"})
-ALLOWED_FUNCTIONS = AGGREGATE_NAMES | {"lower", "date_part"}
+ARITHMETIC_NAMES = frozenset({"+", "-", "*", "/"})
+TWO_VALUE_FUNCTIONS = ARITHMETIC_NAMES | {"nullif"}
+ALLOWED_CLASSES = frozenset({"FUNCTION", "COLUMN_REF", "CONSTANT", "PARAMETER", "COMPARISON", "CONJUNCTION", "BETWEEN", "CAST", "WINDOW"})
+ALLOWED_FUNCTIONS = AGGREGATE_NAMES | TWO_VALUE_FUNCTIONS | {"lower", "date_part"}
+WINDOW_TYPES = frozenset({"WINDOW_LAG", "WINDOW_LEAD"})
+SORT_TYPES = frozenset({"ORDER_DEFAULT", "ASCENDING", "DESCENDING"})
 COMPARISON_OPS = {
     "COMPARE_EQUAL": "=",
     "COMPARE_GREATERTHANOREQUALTO": ">=",
@@ -30,13 +35,29 @@ class _Reject(Exception):
     pass
 
 
-def validate(built: dict[str, Any], resolved: Resolved, lookup: ValueLookup | None = None, default_row_limit: int = 1000) -> dict[str, Any]:
-    """Return {"valid", "reasons"}. The first failed rule stops the check."""
+def validate(
+    built: dict[str, Any],
+    resolved: Resolved,
+    lookup: ValueLookup | None = None,
+    default_row_limit: int = 1000,
+    matched: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Return {"valid", "reasons"}. The first failed rule stops the check. With matched, the SQL must also agree with the plan."""
     try:
-        _Checker(built, resolved, lookup, default_row_limit).run()
+        if matched is not None and matched.get("repeat_purchase"):
+            _check_repeat(built, resolved, matched, default_row_limit)
+        else:
+            _Checker(built, resolved, lookup, default_row_limit).run(matched)
     except _Reject as reject:
         return {"valid": False, "reasons": [str(reject)]}
     return {"valid": True, "reasons": []}
+
+
+def _check_repeat(built: dict[str, Any], resolved: Resolved, matched: dict[str, Any], default_row_limit: int) -> None:
+    """The repeat-purchase template uses window functions and nested subqueries that the general rules reject. It passes only when it is exactly the template built from this matched plan."""
+    expected = build_sql(matched, resolved.physical["schema"], Path(resolved.db_file).stem, default_row_limit)
+    if expected is None or built.get("sql") != expected["sql"] or list(built.get("params") or []) != expected["params"]:
+        raise _Reject("SQL does not match the repeat-purchase template for this plan")
 
 
 class _Checker:
@@ -53,15 +74,25 @@ class _Checker:
         self.allowed_constants: set[int] = set()
         self.used_params: set[str] = set()
 
-    def run(self) -> None:
+    def run(self, matched: dict[str, Any] | None) -> None:
         node = self._statement()
         self._check_tree_nodes(node)
+        if node.get("sample") is not None or (node.get("cte_map") or {}).get("map"):
+            raise _Reject("SAMPLE and WITH clauses are not allowed")
+        if node.get("qualify") is not None:
+            raise _Reject("QUALIFY is not allowed")
         table = self._from(node.get("from_table"))
-        kind = self._select(node.get("select_list") or [], table)
-        self._check_empty_clauses(node)
-        self._modifiers(node.get("modifiers") or [], kind)
         if node.get("where_clause") is not None:
             self._condition(node["where_clause"], table)
+        groups = self._group_by(node, table)
+        items = node.get("select_list") or []
+        aggregated = bool(groups) or node.get("having") is not None or any(_is_aggregate(child) for item in items for child in _walk(item))
+        self._select(items, table, groups, aggregated)
+        if node.get("having") is not None:
+            self._having(node["having"], table)
+        aliases = {item["alias"] for item in items if item.get("alias")}
+        self._modifiers(node.get("modifiers") or [], table, groups, aliases, aggregated)
+        self._check_plan(node, table, groups, matched)
         self._check_literals(node)
         self._check_params(node)
 
@@ -82,6 +113,8 @@ class _Checker:
                 raise _Reject(f"SQL uses a construct that is not allowed: {node['class']}")
             if node["class"] == "FUNCTION" and node.get("function_name") not in ALLOWED_FUNCTIONS:
                 raise _Reject(f"SQL calls a function that is not allowed: {node.get('function_name')}")
+            if node["class"] == "WINDOW" and node.get("type") not in WINDOW_TYPES:
+                raise _Reject(f"window function is not allowed: {node.get('function_name')}")
 
     def _from(self, source: Any) -> str:
         if not isinstance(source, dict) or source.get("type") != "BASE_TABLE":
@@ -93,28 +126,68 @@ class _Checker:
             raise _Reject(f"unknown table {name}")
         return name
 
-    def _select(self, items: list[dict[str, Any]], table: str) -> str:
+    def _group_by(self, node: dict[str, Any], table: str) -> list[str]:
+        expressions = node.get("group_expressions") or []
+        if expressions and node.get("group_sets") != [list(range(len(expressions)))]:
+            raise _Reject("GROUP BY may list plain columns only: ROLLUP, CUBE and GROUPING SETS are not allowed")
+        names: list[str] = []
+        for expression in expressions:
+            if expression.get("class") != "COLUMN_REF":
+                raise _Reject("GROUP BY may list plain columns only")
+            names.append(self._column_name(expression, table))
+        return names
+
+    def _select(self, items: list[dict[str, Any]], table: str, groups: list[str], aggregated: bool) -> None:
         if not items:
             raise _Reject("SELECT has no columns")
-        kinds: set[str] = set()
         for item in items:
-            if item.get("class") == "COLUMN_REF":
-                self._column_name(item, table)
-                kinds.add("row")
-            elif item.get("class") == "FUNCTION" and item.get("function_name") in AGGREGATE_NAMES:
-                if item.get("distinct") or item.get("filter") is not None:
-                    raise _Reject("aggregates with DISTINCT or FILTER are not allowed")
-                self._aggregate_arguments(item, table)
-                kinds.add("aggregate")
-            else:
-                raise _Reject("SELECT may list columns or one aggregate only")
-        if len(kinds) > 1:
-            raise _Reject("a query cannot mix columns and aggregates")
-        if kinds == {"aggregate"} and len(items) != 1:
-            raise _Reject("an aggregate query returns one aggregate only")
-        return kinds.pop()
+            self._projection(item, table, groups, aggregated)
+
+    def _projection(self, node: dict[str, Any], table: str, groups: list[str], aggregated: bool) -> None:
+        cls = node.get("class")
+        name = node.get("function_name")
+        if cls == "CONSTANT":
+            return
+        if cls == "PARAMETER":
+            self._param(node)
+        elif cls == "COLUMN_REF":
+            column = self._column_name(node, table)
+            if aggregated and column not in groups:
+                raise _Reject(f"{column} must be in GROUP BY or inside an aggregate")
+        elif cls == "FUNCTION" and name in AGGREGATE_NAMES:
+            self._aggregate_arguments(node, table)
+        elif cls == "FUNCTION" and name == "/" and _is_share_shape(node):
+            self._share(node, table)
+        elif cls == "FUNCTION" and name in TWO_VALUE_FUNCTIONS:
+            children = node.get("children") or []
+            if len(children) != 2:
+                raise _Reject(f"{name} takes two values")
+            for child in children:
+                self._projection(child, table, groups, aggregated)
+        elif cls == "WINDOW":
+            self._window(node, table, groups, aggregated)
+        else:
+            raise _Reject("SELECT may list columns, aggregates, arithmetic and window functions only")
+
+    def _window(self, node: dict[str, Any], table: str, groups: list[str], aggregated: bool) -> None:
+        if node.get("distinct") or node.get("ignore_nulls") or node.get("filter_expr") is not None:
+            raise _Reject("window functions take no DISTINCT, IGNORE NULLS or FILTER")
+        if node.get("offset_expr") is not None or node.get("default_expr") is not None:
+            raise _Reject("window functions take no offset or default")
+        children = node.get("children") or []
+        if len(children) != 1:
+            raise _Reject("window functions take one value")
+        self._projection(children[0], table, groups, aggregated)
+        for expression in node.get("partitions") or []:
+            self._projection(expression, table, groups, aggregated)
+        for order in node.get("orders") or []:
+            if order.get("type") not in SORT_TYPES:
+                raise _Reject("window ORDER BY direction is not allowed")
+            self._projection(order.get("expression") or {}, table, groups, aggregated)
 
     def _aggregate_arguments(self, item: dict[str, Any], table: str) -> None:
+        if item.get("distinct") or item.get("filter") is not None or (item.get("order_bys") or {}).get("orders"):
+            raise _Reject("aggregates with DISTINCT, FILTER or ORDER BY are not allowed")
         children = item.get("children") or []
         if item["function_name"] == "count_star":
             if children:
@@ -124,6 +197,15 @@ class _Checker:
             raise _Reject(f"{item['function_name'].upper()} takes one column")
         self._column_name(children[0], table)
 
+    def _share(self, node: dict[str, Any], table: str) -> None:
+        count, nullif = node["children"]
+        if count.get("distinct") or (count.get("order_bys") or {}).get("orders") or count.get("children"):
+            raise _Reject("SHARE counts rows with an optional WHERE only")
+        self._condition(count["filter"], table)
+        self._aggregate_arguments(nullif["children"][0], table)
+        if self._value(self._param(nullif["children"][1])) != 0:
+            raise _Reject("SHARE must divide by NULLIF(COUNT(*), 0)")
+
     def _column_name(self, node: dict[str, Any], table: str) -> str:
         names = node.get("column_names") or []
         if len(names) != 1:
@@ -132,29 +214,86 @@ class _Checker:
             raise _Reject(f"unknown column {names[0]} in {table}")
         return names[0]
 
-    def _check_empty_clauses(self, node: dict[str, Any]) -> None:
-        if node.get("group_expressions") or node.get("having") is not None or node.get("qualify") is not None:
-            raise _Reject("GROUP BY, HAVING and QUALIFY are not allowed")
-        if node.get("sample") is not None or (node.get("cte_map") or {}).get("map"):
-            raise _Reject("SAMPLE and WITH clauses are not allowed")
-
-    def _modifiers(self, modifiers: list[dict[str, Any]], kind: str) -> None:
+    def _modifiers(self, modifiers: list[dict[str, Any]], table: str, groups: list[str], aliases: set[str], aggregated: bool) -> None:
+        limits: list[dict[str, Any]] = []
         for modifier in modifiers:
-            if modifier.get("type") != "LIMIT_MODIFIER" or modifier.get("offset") is not None:
-                raise _Reject("only LIMIT is allowed after the query")
-        if kind == "aggregate":
-            if modifiers:
-                raise _Reject("an aggregate query must not have a LIMIT")
+            kind = modifier.get("type")
+            if kind == "ORDER_MODIFIER":
+                for order in modifier.get("orders") or []:
+                    self._order_key(order, table, groups, aliases, aggregated)
+            elif kind == "LIMIT_MODIFIER" and modifier.get("offset") is None:
+                limits.append(modifier)
+            else:
+                raise _Reject("only ORDER BY and LIMIT are allowed after the query")
+        if aggregated and not groups:
+            if limits:
+                raise _Reject("a single-value aggregate must not have a LIMIT")
             return
-        if len(modifiers) != 1:
-            raise _Reject("a row query must have a LIMIT")
-        limit = modifiers[0].get("limit") or {}
+        if len(limits) != 1:
+            raise _Reject("a row query or a grouped aggregate must have one LIMIT")
+        self._limit(limits[0])
+
+    def _order_key(self, order: dict[str, Any], table: str, groups: list[str], aliases: set[str], aggregated: bool) -> None:
+        if order.get("type") not in SORT_TYPES:
+            raise _Reject("ORDER BY direction is not allowed")
+        expression = order.get("expression") or {}
+        names = expression.get("column_names") or []
+        if expression.get("class") != "COLUMN_REF" or len(names) != 1:
+            raise _Reject("ORDER BY may name a selected alias or a column")
+        name = names[0]
+        if name in aliases:
+            return
+        if name in self.tables[table] and (not aggregated or name in groups):
+            return
+        raise _Reject(f"ORDER BY {name} must be a selected alias or a grouped column")
+
+    def _limit(self, modifier: dict[str, Any]) -> None:
+        limit = modifier.get("limit") or {}
         value = (limit.get("value") or {}).get("value")
         if limit.get("class") != "CONSTANT" or isinstance(value, bool) or not isinstance(value, int):
             raise _Reject("LIMIT must be a whole number")
         if not 1 <= value <= self.default_row_limit:
             raise _Reject(f"LIMIT must be between 1 and {self.default_row_limit}")
         self.allowed_constants.add(id(limit))
+
+    def _having(self, node: dict[str, Any], table: str) -> None:
+        if node.get("class") == "CONJUNCTION":
+            if node.get("type") != "CONJUNCTION_AND":
+                raise _Reject("only AND may join HAVING conditions")
+            for child in node.get("children") or []:
+                self._having(child, table)
+        elif node.get("class") == "COMPARISON":
+            op = COMPARISON_OPS.get(node.get("type"))
+            if op is None or op not in self.numeric_ops:
+                raise _Reject("HAVING uses an operator that is not allowed")
+            self._having_metric(node["left"], table)
+            right = node["right"]
+            if right.get("class") != "PARAMETER":
+                raise _Reject("HAVING must compare an aggregate with a value")
+            self._number(self._param(right))
+        elif node.get("class") == "BETWEEN":
+            if "BETWEEN" not in self.numeric_ops:
+                raise _Reject("HAVING BETWEEN is not allowed")
+            self._having_metric(node["input"], table)
+            low, high = node["lower"], node["upper"]
+            if low.get("class") != "PARAMETER" or high.get("class") != "PARAMETER":
+                raise _Reject("HAVING BETWEEN must compare an aggregate with two values")
+            low_value, high_value = self._number(self._param(low)), self._number(self._param(high))
+            if low_value > high_value:
+                raise _Reject("HAVING BETWEEN needs low at most high")
+        else:
+            raise _Reject("HAVING uses a condition that is not allowed")
+
+    def _having_metric(self, node: dict[str, Any], table: str) -> None:
+        if _is_share_shape(node):
+            self._share(node, table)
+        else:
+            self._aggregate(node, table)
+
+    def _aggregate(self, node: dict[str, Any], table: str) -> None:
+        if not _is_aggregate(node):
+            raise _Reject("HAVING must compare an aggregate")
+        self._aggregate_arguments(node, table)
 
     def _condition(self, node: dict[str, Any], table: str) -> None:
         if node.get("class") == "CONJUNCTION":
@@ -294,6 +433,27 @@ class _Checker:
     def _value(self, identifier: str) -> Any:
         return self.params[int(identifier) - 1]
 
+    def _check_plan(self, node: dict[str, Any], table: str, groups: list[str], plan: dict[str, Any] | None) -> None:
+        if plan is None:
+            return
+        if plan.get("table") != table:
+            raise _Reject(f"SQL reads {table} but the plan matched {plan.get('table')}")
+        if sorted(groups) != sorted(plan.get("dimensions") or []):
+            raise _Reject("GROUP BY must list exactly the plan's dimensions")
+        items = node.get("select_list") or []
+        calculated = bool(plan.get("calculations"))
+        for metric in plan.get("metrics") or []:
+            if calculated:
+                found = any(_is_metric(node_, metric) for node_ in _walk(items))
+            else:
+                item = next((item_ for item_ in items if item_.get("alias") == metric["alias"]), None)
+                found = item is not None and _is_metric(item, metric)
+            if not found:
+                raise _Reject(f"SELECT must include {metric['function']} of {metric['column']} as {metric['alias']}")
+        for name in plan.get("select") or []:
+            if not any(found.get("class") == "COLUMN_REF" and found.get("column_names") == [name] for found in items):
+                raise _Reject(f"SELECT must include the plan's column {name}")
+
     def _check_literals(self, root: Any) -> None:
         for node in _walk(root):
             if node.get("class") == "CONSTANT" and id(node) not in self.allowed_constants:
@@ -304,6 +464,53 @@ class _Checker:
         expected = {str(index) for index in range(1, len(self.params) + 1)}
         if found != expected or self.used_params != expected:
             raise _Reject("parameters do not match the SQL placeholders")
+
+
+def _is_aggregate(node: dict[str, Any]) -> bool:
+    return node.get("class") == "FUNCTION" and node.get("function_name") in AGGREGATE_NAMES
+
+
+def _is_metric(node: dict[str, Any], metric: dict[str, Any]) -> bool:
+    if metric["function"] == "SHARE":
+        return _is_share_shape(node) and _filter_columns(node["children"][0]["filter"]) == {item["column"] for item in metric.get("where") or []}
+    if node.get("class") != "FUNCTION" or node.get("function_name") != _function_name(metric):
+        return False
+    if metric["column"] == "*":
+        return not node.get("children")
+    return [child.get("column_names") for child in node.get("children") or []] == [[metric["column"]]]
+
+
+def _is_share_shape(node: dict[str, Any]) -> bool:
+    if node.get("class") != "FUNCTION" or node.get("function_name") != "/":
+        return False
+    children = node.get("children") or []
+    if len(children) != 2 or not _is_count_star(children[0]) or children[0].get("filter") is None:
+        return False
+    nullif = children[1]
+    denominator = nullif.get("children") or []
+    return (
+        nullif.get("class") == "FUNCTION"
+        and nullif.get("function_name") == "nullif"
+        and len(denominator) == 2
+        and _is_count_star(denominator[0])
+        and denominator[1].get("class") == "PARAMETER"
+    )
+
+
+def _is_count_star(node: dict[str, Any]) -> bool:
+    return node.get("class") == "FUNCTION" and node.get("function_name") == "count_star"
+
+
+def _filter_columns(node: Any) -> set[str]:
+    names: set[str] = set()
+    for item in _walk(node):
+        if item.get("class") == "COLUMN_REF" and len(item.get("column_names") or []) == 1:
+            names.add(item["column_names"][0])
+    return names
+
+
+def _function_name(metric: dict[str, Any]) -> str:
+    return "count_star" if metric["column"] == "*" else metric["function"].lower()
 
 
 def _walk(node: Any):

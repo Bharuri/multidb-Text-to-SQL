@@ -6,7 +6,7 @@ from pathlib import Path
 import duckdb
 
 from src.query.catalog import Resolved
-from src.query.lookup import lookup_values, make_lookup
+from src.query.lookup import LOOKUP_LIMIT, lookup_values, make_lookup
 from src.query.matcher import MatchError, match_plan
 
 SCHEMA = "shop"
@@ -38,6 +38,18 @@ class LookupValuesTests(unittest.TestCase):
     def test_one_distinct_value_is_returned(self) -> None:
         values = lookup_values(self.db_path, SCHEMA, "Orders", "Ship_Mode", "second class")
         self.assertEqual(values, ["Second Class"])
+
+    def test_result_is_bounded_even_with_many_matches(self) -> None:
+        connection = duckdb.connect(str(self.db_path))
+        try:
+            connection.execute(
+                f'INSERT INTO "{SCHEMA}"."{SCHEMA}"."Orders" VALUES ('
+                "'air', 'F'), ('Air ', 'G'), ('AIR', 'H')"
+            )
+        finally:
+            connection.close()
+        values = lookup_values(self.db_path, SCHEMA, "Orders", "Ship_Mode", "air")
+        self.assertEqual(len(values), LOOKUP_LIMIT)
 
     def test_no_match_returns_empty(self) -> None:
         self.assertEqual(lookup_values(self.db_path, SCHEMA, "Orders", "Ship_Mode", "Teleport"), [])
@@ -95,8 +107,13 @@ class MakeLookupTests(unittest.TestCase):
         plan = {
             "table": "Orders",
             "select": [],
-            "aggregation": {"function": "COUNT", "column": "*"},
+            "dimensions": [],
+            "metrics": [{"function": "COUNT", "column": "*", "alias": "n"}],
             "filters": [{"column": "Ship_Mode", "operator": "=", "value": "second class"}],
+            "group_by": [],
+            "having": [],
+            "order_by": [],
+            "calculations": [],
             "limit": None,
         }
         matched = match_plan(plan, self.resolved, lookup=lookup)

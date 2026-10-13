@@ -12,11 +12,16 @@ CATALOG = "sample_superstore"
 MATCHED_COUNT: dict[str, Any] = {
     "table": "Orders",
     "select": [],
-    "aggregation": {"function": "COUNT", "column": "*"},
+    "metrics": [{"function": "COUNT", "column": "*", "alias": "total"}],
+    "dimensions": [],
     "filters": [
         {"column": "Category", "operator": "=", "value": "Furniture"},
         {"column": "Order_Date", "operator": "year_month", "value": [2025, 9]},
     ],
+    "group_by": [],
+    "having": [],
+    "order_by": [],
+    "calculations": [],
     "limit": None,
     "matches": [],
 }
@@ -24,11 +29,16 @@ MATCHED_COUNT: dict[str, Any] = {
 MATCHED_ROWS: dict[str, Any] = {
     "table": "Orders",
     "select": ["Sub_Category", "Order_Date", "Sales"],
-    "aggregation": None,
+    "metrics": [],
+    "dimensions": [],
     "filters": [
         {"column": "Sub_Category", "operator": "=", "value": "Phones"},
         {"column": "Order_Date", "operator": "year", "value": 2025},
     ],
+    "group_by": [],
+    "having": [],
+    "order_by": [],
+    "calculations": [],
     "limit": None,
     "matches": [],
 }
@@ -39,7 +49,7 @@ class SqlBuilderTests(unittest.TestCase):
         built = build_sql(MATCHED_COUNT, SCHEMA, CATALOG)
         self.assertEqual(
             built["sql"],
-            'SELECT COUNT(*) FROM "sample_superstore"."sample_superstore"."Orders" WHERE LOWER("Category") = LOWER(?) '
+            'SELECT COUNT(*) AS "total" FROM "sample_superstore"."sample_superstore"."Orders" WHERE LOWER("Category") = LOWER(?) '
             'AND EXTRACT(YEAR FROM "Order_Date") = ? AND EXTRACT(MONTH FROM "Order_Date") = ?',
         )
         self.assertEqual(built["params"], ["Furniture", 2025, 9])
@@ -70,9 +80,9 @@ class SqlBuilderTests(unittest.TestCase):
         matched = copy.deepcopy(MATCHED_COUNT)
         matched["limit"] = 50
         self.assertNotIn("LIMIT", build_sql(matched, SCHEMA, CATALOG)["sql"])
-        matched["aggregation"] = {"function": "SUM", "column": "Sales"}
+        matched["metrics"] = [{"function": "SUM", "column": "Sales", "alias": "total_sales"}]
         built = build_sql(matched, SCHEMA, CATALOG)
-        self.assertTrue(built["sql"].startswith('SELECT SUM("Sales") FROM'))
+        self.assertTrue(built["sql"].startswith('SELECT SUM("Sales") AS "total_sales" FROM'))
         self.assertNotIn("LIMIT", built["sql"])
 
     def test_listed_columns_use_the_given_limit(self) -> None:
@@ -97,8 +107,13 @@ class SqlBuilderTests(unittest.TestCase):
         matched = {
             "table": "Orders",
             "select": [],
-            "aggregation": {"function": "COUNT", "column": "*"},
+            "metrics": [{"function": "COUNT", "column": "*", "alias": "total"}],
+            "dimensions": [],
             "filters": [{"column": "Order_Date", "operator": "date_between", "value": ["2025-01-01", "2025-03-31"]}],
+            "group_by": [],
+            "having": [],
+            "order_by": [],
+            "calculations": [],
             "limit": None,
         }
         built = build_sql(matched, SCHEMA, "memory")
@@ -136,15 +151,98 @@ class SqlBuilderTests(unittest.TestCase):
 
     def test_aggregate_star_only_for_count(self) -> None:
         matched = copy.deepcopy(MATCHED_COUNT)
-        matched["aggregation"] = {"function": "SUM", "column": "*"}
+        matched["metrics"] = [{"function": "SUM", "column": "*", "alias": "total"}]
         with self.assertRaises(BuildError):
             build_sql(matched, SCHEMA, CATALOG)
 
     def test_unknown_aggregate_function_is_a_build_error(self) -> None:
         matched = copy.deepcopy(MATCHED_COUNT)
-        matched["aggregation"] = {"function": "MEDIAN", "column": "Sales"}
+        matched["metrics"] = [{"function": "MEDIAN", "column": "Sales", "alias": "total"}]
         with self.assertRaises(BuildError):
             build_sql(matched, SCHEMA, CATALOG)
+    def test_grouped_aggregate_has_group_having_order_and_limit(self) -> None:
+        matched = copy.deepcopy(MATCHED_ROWS)
+        matched.update(
+            {
+                "select": [],
+                "dimensions": ["Sub_Category"],
+                "metrics": [{"function": "SUM", "column": "Sales", "alias": "total_sales"}],
+                "group_by": ["Sub_Category"],
+                "having": [{"metric": "total_sales", "operator": ">=", "value": 100}],
+                "order_by": [{"ref": "total_sales", "direction": "DESC"}],
+                "limit": 5,
+            }
+        )
+        built = build_sql(matched, SCHEMA, CATALOG, default_row_limit=1000)
+        self.assertEqual(
+            built["sql"],
+            'SELECT "Sub_Category", SUM("Sales") AS "total_sales" FROM "sample_superstore"."sample_superstore"."Orders" '
+            'WHERE LOWER("Sub_Category") = LOWER(?) AND EXTRACT(YEAR FROM "Order_Date") = ? '
+            'GROUP BY "Sub_Category" HAVING SUM("Sales") >= ? ORDER BY "total_sales" DESC LIMIT 5',
+        )
+        self.assertEqual(built["params"], ["Phones", 2025, 100])
+
+    def test_grouped_limit_is_capped_at_default_and_defaults_when_missing(self) -> None:
+        matched = copy.deepcopy(MATCHED_ROWS)
+        matched.update({"select": [], "dimensions": ["Sub_Category"], "metrics": [{"function": "COUNT", "column": "*", "alias": "n"}], "group_by": ["Sub_Category"]})
+        self.assertTrue(build_sql(matched, SCHEMA, CATALOG, default_row_limit=1000)["sql"].endswith(" LIMIT 1000"))
+        matched["limit"] = 99999
+        self.assertTrue(build_sql(matched, SCHEMA, CATALOG, default_row_limit=1000)["sql"].endswith(" LIMIT 1000"))
+
+    def test_having_between_binds_both_bounds(self) -> None:
+        matched = copy.deepcopy(MATCHED_COUNT)
+        matched.update(
+            {
+                "dimensions": ["Category"],
+                "metrics": [{"function": "SUM", "column": "Sales", "alias": "total_sales"}],
+                "filters": [],
+                "group_by": ["Category"],
+                "having": [{"metric": "total_sales", "operator": "BETWEEN", "value": [10, 20]}],
+            }
+        )
+        built = build_sql(matched, SCHEMA, CATALOG)
+        self.assertIn('HAVING SUM("Sales") BETWEEN ? AND ?', built["sql"])
+        self.assertEqual(built["params"], [10, 20])
+
+    def test_having_unknown_metric_is_a_build_error(self) -> None:
+        matched = copy.deepcopy(MATCHED_COUNT)
+        matched.update({"dimensions": ["Category"], "group_by": ["Category"], "having": [{"metric": "missing", "operator": ">", "value": 1}]})
+        with self.assertRaises(BuildError):
+            build_sql(matched, SCHEMA, CATALOG)
+
+    def test_calculations_return_none_for_the_llm_path(self) -> None:
+        matched = copy.deepcopy(MATCHED_COUNT)
+        matched["calculations"] = [{"type": "yoy_change", "metric": "total", "date_column": "Order_Date", "grain": "year", "year": 2025}]
+        self.assertIsNone(build_sql(matched, SCHEMA, CATALOG))
+
+    def test_grouped_sql_runs_in_duckdb(self) -> None:
+        matched = copy.deepcopy(MATCHED_ROWS)
+        matched.update(
+            {
+                "select": [],
+                "dimensions": ["Sub_Category"],
+                "metrics": [{"function": "SUM", "column": "Sales", "alias": "total_sales"}],
+                "filters": [{"column": "Order_Date", "operator": "year", "value": 2025}],
+                "group_by": ["Sub_Category"],
+                "having": [{"metric": "total_sales", "operator": ">", "value": 10}],
+                "order_by": [{"ref": "total_sales", "direction": "DESC"}],
+                "limit": 2,
+            }
+        )
+        built = build_sql(matched, SCHEMA, CATALOG)
+        connection = duckdb.connect()
+        try:
+            connection.execute(f'CREATE SCHEMA "{SCHEMA}"')
+            connection.execute(f'CREATE TABLE "{SCHEMA}"."Orders" ("Sub_Category" VARCHAR, "Order_Date" TIMESTAMP, "Sales" DOUBLE)')
+            connection.execute(
+                f'INSERT INTO "{SCHEMA}"."Orders" VALUES '
+                "('Phones', '2025-02-01', 50), ('Phones', '2025-03-01', 40), "
+                "('Chairs', '2025-02-01', 500), ('Tables', '2025-02-01', 5), ('Tables', '2024-02-01', 900)"
+            )
+            rows = connection.execute(built["sql"].replace(f'"{CATALOG}".', "", 1), built["params"]).fetchall()
+        finally:
+            connection.close()
+        self.assertEqual(rows, [("Chairs", 500.0), ("Phones", 90.0)])
 
 
 if __name__ == "__main__":

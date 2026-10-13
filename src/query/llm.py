@@ -6,14 +6,34 @@ Credentials are never put in an error message. Errors carry the AWS error code o
 from __future__ import annotations
 
 from collections.abc import Callable
+from dataclasses import dataclass
 from typing import Any
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError, PartialCredentialsError
 
+from src.query.plan import PlanError
+from src.query.sql_reply import parse_sql_reply
+
 
 class LlmError(Exception):
     """The LLM call failed. The message is safe to show to the user."""
+
+
+class SqlReplyError(Exception):
+    """The SQL generator's reply was not the strict {"sql", "params"} shape. Keeps the raw reply for the trace."""
+
+    def __init__(self, reasons: list[str], raw: str) -> None:
+        super().__init__("; ".join(reasons))
+        self.reasons = tuple(reasons)
+        self.raw = raw
+
+
+@dataclass(frozen=True)
+class SqlReply:
+    raw: str
+    sql: str
+    params: list[Any]
 
 
 def complete(
@@ -87,3 +107,39 @@ def _bedrock_client(region: str, access_key_id: str | None, secret_access_key: s
     else:
         session = boto3.Session(region_name=region)
     return session.client("bedrock-runtime")
+
+
+def generate_sql(
+    prompt: str,
+    *,
+    model_id: str,
+    region: str,
+    temperature: float,
+    max_output_tokens: int,
+    access_key_id: str | None = None,
+    secret_access_key: str | None = None,
+    session_token: str | None = None,
+    on_chunk: Callable[[str], None] | None = None,
+    client: Any = None,
+) -> SqlReply:
+    """The SQL-generator call. It is a separate call from the planner and is never retried.
+
+    LlmError from the transport propagates unchanged. A malformed reply raises SqlReplyError with the raw text.
+    """
+    raw = complete(
+        prompt,
+        model_id=model_id,
+        region=region,
+        temperature=temperature,
+        max_output_tokens=max_output_tokens,
+        access_key_id=access_key_id,
+        secret_access_key=secret_access_key,
+        session_token=session_token,
+        on_chunk=on_chunk,
+        client=client,
+    )
+    try:
+        parsed = parse_sql_reply(raw)
+    except PlanError as error:
+        raise SqlReplyError(list(error.reasons), raw) from None
+    return SqlReply(raw=raw, sql=parsed["sql"], params=parsed["params"])

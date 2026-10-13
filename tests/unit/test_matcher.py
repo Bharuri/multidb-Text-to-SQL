@@ -78,7 +78,7 @@ def plan(**overrides: Any) -> dict[str, Any]:
     base: dict[str, Any] = {
         "table": "Orders",
         "select": [],
-        "aggregation": {"function": "COUNT", "column": "*"},
+        "metrics": [{"function": "COUNT", "column": "*", "alias": "n"}],
         "filters": [],
         "limit": None,
     }
@@ -105,7 +105,7 @@ class MatcherTests(unittest.TestCase):
     def test_stub_plan_matches(self) -> None:
         matched = match_plan(plan(filters=[filter_on("Sub_Category", "=", "Phones")]), self.resolved)
         self.assertEqual(matched["table"], "Orders")
-        self.assertEqual(matched["aggregation"], {"function": "COUNT", "column": "*"})
+        self.assertEqual(matched["metrics"], [{"function": "COUNT", "column": "*", "alias": "n"}])
         self.assertEqual(matched["filters"], [{"column": "Sub_Category", "operator": "=", "value": "Phones"}])
         self.assertIsNone(matched["limit"])
 
@@ -123,8 +123,8 @@ class MatcherTests(unittest.TestCase):
         self.assertEqual(sources, ["normalized"])
 
     def test_synonym_column_match(self) -> None:
-        matched = match_plan(plan(aggregation={"function": "SUM", "column": "revenue"}), self.resolved)
-        self.assertEqual(matched["aggregation"], {"function": "SUM", "column": "Sales"})
+        matched = match_plan(plan(metrics=[{"function": "SUM", "column": "revenue", "alias": "m"}]), self.resolved)
+        self.assertEqual(matched["metrics"], [{"function": "SUM", "column": "Sales", "alias": "m"}])
         self.assertEqual(matched["matches"][-1]["source"], "synonym")
 
     def test_boolean_expression_maps_to_stored_value(self) -> None:
@@ -136,10 +136,10 @@ class MatcherTests(unittest.TestCase):
         self.assertRejected(candidate, "table: 'Ordrs' does not match any table", "Closest: Orders")
 
     def test_unknown_column_is_reported(self) -> None:
-        self.assertRejected(plan(aggregation={"function": "COUNT", "column": "Profit"}), "does not match any column of Orders")
+        self.assertRejected(plan(metrics=[{"function": "COUNT", "column": "Profit", "alias": "m"}]), "does not match any column of Orders")
 
     def test_ambiguous_column_is_rejected(self) -> None:
-        self.assertRejected(plan(aggregation={"function": "COUNT", "column": "shipdate"}), "matches more than one column of Orders")
+        self.assertRejected(plan(metrics=[{"function": "COUNT", "column": "shipdate", "alias": "m"}]), "matches more than one column of Orders")
 
     def test_unstored_value_is_rejected_with_closest(self) -> None:
         self.assertRejected(plan(filters=[filter_on("Sub_Category", "=", "Chairz")]), "not match any stored value", "Chairs")
@@ -209,19 +209,19 @@ class MatcherTests(unittest.TestCase):
         self.assertRejected(plan(filters=[filter_on("Sub_Category", ">", "Paper")]), "Only '=' is allowed")
 
     def test_sum_needs_numeric_column(self) -> None:
-        self.assertRejected(plan(aggregation={"function": "SUM", "column": "Sub_Category"}), "SUM needs a numeric column")
-        self.assertRejected(plan(aggregation={"function": "SUM", "column": "*"}), "only for COUNT")
-        self.assertRejected(plan(aggregation={"function": "MEDIAN", "column": "Sales"}), "function 'MEDIAN' is not allowed")
+        self.assertRejected(plan(metrics=[{"function": "SUM", "column": "Sub_Category", "alias": "m"}]), "SUM needs a numeric column")
+        self.assertRejected(plan(metrics=[{"function": "SUM", "column": "*", "alias": "m"}]), "only for COUNT")
+        self.assertRejected(plan(metrics=[{"function": "MEDIAN", "column": "Sales", "alias": "m"}]), "function 'MEDIAN' is not allowed")
 
     def test_row_query_needs_select_and_rejects_select_with_aggregate(self) -> None:
-        self.assertRejected(plan(aggregation=None, select=[]), "a row query needs at least one column")
-        matched = match_plan(plan(aggregation=None, select=["Sub_Category"], limit=10), self.resolved)
+        self.assertRejected(plan(metrics=None, select=[]), "a row query needs at least one column")
+        matched = match_plan(plan(metrics=None, select=["Sub_Category"], limit=10), self.resolved)
         self.assertEqual(matched["select"], ["Sub_Category"])
         self.assertEqual(matched["limit"], 10)
-        self.assertRejected(plan(select=["Sales"]), "cannot be used together with an aggregation")
+        self.assertRejected(plan(select=["Sales"]), "cannot be used together with metrics")
 
     def test_star_select_expands_to_every_column(self) -> None:
-        matched = match_plan(plan(aggregation=None, select=["*"]), self.resolved)
+        matched = match_plan(plan(metrics=None, select=["*"]), self.resolved)
         self.assertEqual(
             matched["select"],
             ["Sub_Category", "Ship_Date", "ShipDate", "Order_Date", "Sales", "Quantity", "Ship_Mode", "Returned"],
@@ -229,7 +229,7 @@ class MatcherTests(unittest.TestCase):
         self.assertEqual(matched["matches"][-1]["result"], "all 8 columns")
 
     def test_star_select_cannot_mix_with_columns(self) -> None:
-        self.assertRejected(plan(aggregation=None, select=["*", "Sales"]), "'*' cannot be combined with other columns")
+        self.assertRejected(plan(metrics=None, select=["*", "Sales"]), "'*' cannot be combined with other columns")
 
     def test_limit_must_be_positive_whole_number(self) -> None:
         self.assertRejected(plan(limit=0), "limit: must be a positive whole number")
@@ -249,11 +249,134 @@ class MatcherTests(unittest.TestCase):
         match_plan(candidate, self.resolved)
         self.assertEqual(repr(candidate), snapshot)
 
+    def test_dimensions_group_by_metrics_order_and_limit_match(self) -> None:
+        matched = match_plan(
+            plan(
+                dimensions=["sub category"],
+                group_by=["Sub_Category"],
+                metrics=[{"function": "SUM", "column": "sales", "alias": "total_sales"}],
+                order_by=[{"ref": "total_sales", "direction": "desc"}],
+                limit=5,
+            ),
+            self.resolved,
+        )
+        self.assertEqual(matched["dimensions"], ["Sub_Category"])
+        self.assertEqual(matched["group_by"], ["Sub_Category"])
+        self.assertEqual(matched["metrics"], [{"function": "SUM", "column": "Sales", "alias": "total_sales"}])
+        self.assertEqual(matched["order_by"], [{"ref": "total_sales", "direction": "DESC"}])
+        self.assertEqual(matched["select"], [])
+        self.assertEqual(matched["limit"], 5)
+
+    def test_group_by_must_match_dimensions(self) -> None:
+        self.assertRejected(
+            plan(dimensions=["Sub_Category"], group_by=["Ship_Mode"]),
+            "group_by: must list the same columns as dimensions",
+        )
+
+    def test_dimensions_need_a_metric(self) -> None:
+        self.assertRejected(plan(metrics=None, select=["Sub_Category"], dimensions=["Sub_Category"]), "dimensions: need at least one metric")
+
+    def test_group_by_needs_a_metric(self) -> None:
+        self.assertRejected(plan(metrics=None, select=["Sales"], group_by=["Sub_Category"]), "group_by: needs at least one metric")
+
+    def test_having_references_a_metric_alias(self) -> None:
+        matched = match_plan(plan(having=[{"metric": "n", "operator": ">", "value": 10}]), self.resolved)
+        self.assertEqual(matched["having"], [{"metric": "n", "operator": ">", "value": 10}])
+        self.assertRejected(plan(having=[{"metric": "total", "operator": ">", "value": 10}]), "does not match any metric alias")
+
+    def test_having_between_is_checked(self) -> None:
+        self.assertRejected(plan(having=[{"metric": "n", "operator": "BETWEEN", "value": [9, 2]}]), "range for n is reversed")
+
+    def test_order_by_rejects_unknown_reference(self) -> None:
+        self.assertRejected(
+            plan(dimensions=["Sub_Category"], group_by=["Sub_Category"], order_by=[{"ref": "Profit", "direction": "ASC"}]),
+            "does not match any output column or metric alias",
+        )
+
+    def test_order_by_direction_is_checked(self) -> None:
+        self.assertRejected(
+            plan(dimensions=["Sub_Category"], group_by=["Sub_Category"], order_by=[{"ref": "n", "direction": "UP"}]),
+            "direction 'UP' is not allowed",
+        )
+
+    def test_single_value_aggregate_rejects_limit_and_order(self) -> None:
+        self.assertRejected(plan(limit=5), "limit: a single-value aggregate has no limit")
+        self.assertRejected(plan(order_by=[{"ref": "n", "direction": "ASC"}]), "order_by: a single-value aggregate has nothing to order")
+
+    def test_row_query_order_by_uses_selected_columns(self) -> None:
+        matched = match_plan(
+            plan(metrics=None, select=["Sub_Category", "Sales"], order_by=[{"ref": "Sales", "direction": "desc"}]),
+            self.resolved,
+        )
+        self.assertEqual(matched["order_by"], [{"ref": "Sales", "direction": "DESC"}])
+        self.assertRejected(
+            plan(metrics=None, select=["Sub_Category"], order_by=[{"ref": "Quantity", "direction": "ASC"}]),
+            "does not match any output column or metric alias",
+        )
+
+    def test_alias_rules(self) -> None:
+        self.assertRejected(plan(metrics=[{"function": "COUNT", "column": "*", "alias": "1bad"}]), "alias '1bad' must start")
+        self.assertRejected(plan(metrics=[{"function": "COUNT", "column": "*"}]), "alias None must start")
+        self.assertRejected(
+            plan(metrics=[{"function": "COUNT", "column": "*", "alias": "n"}, {"function": "MAX", "column": "Sales", "alias": "n"}]),
+            "alias 'n' is used more than once",
+        )
+        self.assertRejected(
+            plan(
+                dimensions=["Sub_Category"],
+                group_by=["Sub_Category"],
+                metrics=[{"function": "COUNT", "column": "*", "alias": "Sub_Category"}],
+            ),
+            "is also a dimension name",
+        )
+
+    def test_calculation_yoy_is_matched(self) -> None:
+        calculation = {"type": "yoy_change", "metric": "n", "date_column": "order date", "grain": "Year", "year": 2014}
+        matched = match_plan(plan(calculations=[calculation]), self.resolved)
+        self.assertEqual(
+            matched["calculations"],
+            [{"type": "yoy_change", "metric": "n", "date_column": "Order_Date", "grain": "year", "year": 2014}],
+        )
+
+    def test_calculation_rules_are_checked(self) -> None:
+        base = {"type": "percentage_growth", "metric": "n", "date_column": "Order_Date", "grain": "year", "year": 2014}
+        self.assertRejected(plan(calculations=[{**base, "date_column": "Sales"}]), "date_column Sales is not a date column")
+        self.assertRejected(plan(calculations=[{**base, "type": "median_change"}]), "calculation type 'median_change' is not allowed")
+        self.assertRejected(plan(calculations=[{**base, "grain": "week"}]), "grain 'week' is not allowed")
+        self.assertRejected(plan(calculations=[{**base, "year": "2014"}]), "year for Order_Date must be a whole number")
+        self.assertRejected(plan(calculations=[{**base, "metric": "missing"}]), "does not match any metric alias")
+
+    def test_calculation_needs_a_metric(self) -> None:
+        calculation = {"type": "yoy_change", "metric": "n", "date_column": "Order_Date", "grain": "year", "year": 2014}
+        self.assertRejected(plan(metrics=None, select=["Sales"], calculations=[calculation]), "calculations: needs at least one metric")
+
     def test_normalize_rules(self) -> None:
         self.assertEqual(normalize("Sub_Category"), "subcategory")
         self.assertEqual(normalize("sub category"), normalize("Sub_Category"))
         self.assertEqual(normalize("Phone"), normalize("Phones"))
         self.assertEqual(normalize("s"), "s")
+
+
+class CapabilityGateTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.resolved = make_resolved()
+        self.having = [{"metric": "n", "operator": ">", "value": 5}]
+
+    def test_disabled_having_rejects(self) -> None:
+        with self.assertRaises(MatchError) as caught:
+            match_plan(plan(having=self.having), self.resolved, capabilities={"having": False})
+        self.assertTrue(any(reason.startswith("having: is turned off") for reason in caught.exception.reasons))
+
+    def test_enabled_having_matches(self) -> None:
+        matched = match_plan(plan(having=self.having), self.resolved, capabilities={"having": True})
+        self.assertEqual(len(matched["having"]), 1)
+
+    def test_no_capabilities_means_no_gate(self) -> None:
+        self.assertEqual(len(match_plan(plan(having=self.having), self.resolved)["having"]), 1)
+
+    def test_plan_without_feature_is_not_affected(self) -> None:
+        matched = match_plan(plan(), self.resolved, capabilities={"having": False})
+        self.assertEqual(matched["having"], [])
 
 
 if __name__ == "__main__":

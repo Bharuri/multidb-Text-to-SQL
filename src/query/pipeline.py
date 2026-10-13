@@ -1,4 +1,4 @@
-"""Ten-stage question pipeline. Stages are replaced one at a time by their real modules; the rest stay stubs."""
+"""Eleven-stage question pipeline. Each stage reads the outputs of the stages before it and stops the run on failure."""
 
 from __future__ import annotations
 
@@ -10,17 +10,31 @@ from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
-from src.query.catalog import PROJECT_ROOT, CatalogError, load_yaml, resolve
+from src.query.business_semantics import BusinessError, BusinessSemantics, load_business
+from src.query.catalog import PROJECT_ROOT, CatalogError, Resolved, load_yaml, resolve
 from src.query.executor import ExecuteError, execute
-from src.query.llm import LlmError, complete
+from src.query.llm import LlmError, SqlReplyError, complete, generate_sql
 from src.query.lookup import make_lookup
 from src.query.matcher import MatchError, match_plan
 from src.query.plan import CannotAnswer, PlanError, parse_reply
 from src.query.prompt import PromptError, build_prompt
 from src.query.sql_builder import BuildError, build_sql
+from src.query.sql_prompt import build_sql_prompt
 from src.query.validator import validate
 
-STAGE_NAMES = ("submit", "resolve", "prompt", "llm", "plan", "match", "build_sql", "validate", "execute", "respond")
+STAGE_NAMES = (
+    "submit",
+    "resolve",
+    "prompt",
+    "llm",
+    "plan",
+    "match",
+    "sql_prompt",
+    "sql_generate",
+    "validate",
+    "execute",
+    "respond",
+)
 LOGGER = logging.getLogger("multidb.query")
 
 
@@ -36,7 +50,9 @@ class Request:
     database: str
     question: str
     credentials: Credentials | None = field(default=None, repr=False)
+    # on_chunk streams the planner reply. on_sql_chunk streams the SQL-generator reply.
     on_chunk: Callable[[str], None] | None = field(default=None, repr=False, compare=False)
+    on_sql_chunk: Callable[[str], None] | None = field(default=None, repr=False, compare=False)
 
 
 STAGE_STATUSES = ("ok", "failed", "skipped")
@@ -113,15 +129,30 @@ def stage_resolve(request: Request, trace: list[StageResult]) -> StageResult:
     )
 
 
+def _capabilities() -> dict[str, bool]:
+    return {key: bool(value) for key, value in load_yaml(PROJECT_ROOT / "config.yaml")["capabilities"].items()}
+
+
+def _business(resolved: Resolved) -> BusinessSemantics:
+    return load_business(resolved, PROJECT_ROOT)
+
+
 def stage_prompt(request: Request, trace: list[StageResult]) -> StageResult:
     try:
         resolved = resolve(request.database)
-    except CatalogError as error:
+        business = _business(resolved)
+    except (CatalogError, BusinessError) as error:
         return _failed("prompt", str(error))
     retrieval = _retrieval_config()
     limit = int(retrieval["max_prompt_chars"])
     try:
-        prompt = build_prompt(request.question, resolved, limit, int(retrieval["value_list_threshold"]))
+        prompt = build_prompt(
+            request.question,
+            resolved,
+            limit,
+            int(retrieval["value_list_threshold"]),
+            business_definitions=business.prompt_text(),
+        )
     except PromptError as error:
         return StageResult(stage="prompt", status="failed", reason=error.reason, output={"chars": error.chars, "limit": error.limit})
     return _ok("prompt", {"prompt": prompt, "chars": len(prompt), "limit": limit})
@@ -129,7 +160,7 @@ def stage_prompt(request: Request, trace: list[StageResult]) -> StageResult:
 
 def stage_llm(request: Request, trace: list[StageResult]) -> StageResult:
     prompt = next(r.output["prompt"] for r in trace if r.stage == "prompt")
-    settings = load_yaml(PROJECT_ROOT / "config.yaml")["llm"]
+    settings = load_yaml(PROJECT_ROOT / "config.yaml")["planner_llm"]
     creds = request.credentials
     try:
         raw_reply = complete(
@@ -165,23 +196,92 @@ def stage_match(request: Request, trace: list[StageResult]) -> StageResult:
     plan = next(r.output["plan"] for r in trace if r.stage == "plan")
     try:
         resolved = resolve(request.database)
-    except CatalogError as error:
+        business = _business(resolved)
+    except (CatalogError, BusinessError) as error:
         return _failed("match", str(error))
     try:
-        matched = match_plan(plan, resolved, lookup=make_lookup(resolved))
+        matched = match_plan(plan, resolved, lookup=make_lookup(resolved), business=business, capabilities=_capabilities())
     except MatchError as error:
         return StageResult(stage="match", status="failed", reason="; ".join(error.reasons), output={"reasons": list(error.reasons)})
     return _ok("match", {"matched_plan": matched})
 
 
-def stage_build_sql(request: Request, trace: list[StageResult]) -> StageResult:
+def stage_sql_prompt(request: Request, trace: list[StageResult]) -> StageResult:
     matched = next(r.output["matched_plan"] for r in trace if r.stage == "match")
     try:
         resolved = resolve(request.database)
-        built = build_sql(matched, resolved.physical["schema"], Path(resolved.db_file).stem, _default_row_limit())
-    except (CatalogError, BuildError) as error:
-        return _failed("build_sql", str(error))
-    return _ok("build_sql", built)
+        business = _business(resolved)
+    except (CatalogError, BusinessError) as error:
+        return _failed("sql_prompt", str(error))
+    limit = int(_retrieval_config()["max_prompt_chars"])
+    try:
+        prompt = build_sql_prompt(
+            request.question,
+            matched,
+            resolved,
+            limit,
+            _default_row_limit(),
+            business_definitions=business.prompt_text(),
+        )
+    except PromptError as error:
+        return StageResult(stage="sql_prompt", status="failed", reason=error.reason, output={"chars": error.chars, "limit": error.limit})
+    return _ok("sql_prompt", {"prompt": prompt, "chars": len(prompt), "limit": limit})
+
+
+def stage_sql_generate(request: Request, trace: list[StageResult]) -> StageResult:
+    """The builder path runs when simple_sql_builder is on, and always for a repeat-purchase plan, which has only a fixed SQL form. Plans the builder returns None for go to the SQL-generator LLM."""
+    matched = next(r.output["matched_plan"] for r in trace if r.stage == "match")
+    prompt = next(r.output["prompt"] for r in trace if r.stage == "sql_prompt")
+    try:
+        resolved = resolve(request.database)
+    except CatalogError as error:
+        return _failed("sql_generate", str(error))
+    if _capabilities().get("simple_sql_builder") or matched.get("repeat_purchase"):
+        try:
+            built = build_sql(matched, resolved.physical["schema"], Path(resolved.db_file).stem, _default_row_limit())
+        except BuildError as error:
+            return _failed("sql_generate", str(error))
+        if built is not None:
+            return _ok("sql_generate", {"path": "builder", "sql": built["sql"], "params": built["params"]})
+    settings = load_yaml(PROJECT_ROOT / "config.yaml")["sql_generator_llm"]
+    creds = request.credentials
+    try:
+        reply = generate_sql(
+            prompt,
+            model_id=settings["model_id"],
+            region=settings["region"],
+            temperature=float(settings["temperature"]),
+            max_output_tokens=int(settings["max_output_tokens"]),
+            access_key_id=creds.access_key_id if creds else None,
+            secret_access_key=creds.secret_access_key if creds else None,
+            session_token=creds.session_token if creds else None,
+            on_chunk=request.on_sql_chunk,
+        )
+    except LlmError as error:
+        return _failed("sql_generate", str(error))
+    except SqlReplyError as error:
+        return StageResult(
+            stage="sql_generate",
+            status="failed",
+            reason="; ".join(error.reasons),
+            output={"path": "llm", "raw_reply": error.raw, "reasons": list(error.reasons)},
+        )
+    return _ok(
+        "sql_generate",
+        {
+            "path": "llm",
+            "raw_reply": reply.raw,
+            "sql": reply.sql,
+            "params": reply.params,
+            "model_id": settings["model_id"],
+            "region": settings["region"],
+        },
+    )
+
+
+def _sql_of(trace: list[StageResult]) -> dict[str, Any]:
+    generated = next(r.output for r in trace if r.stage == "sql_generate")
+    return {"sql": generated["sql"], "params": generated["params"]}
 
 
 def _retrieval_config() -> dict[str, Any]:
@@ -193,20 +293,25 @@ def _default_row_limit() -> int:
 
 
 def stage_validate(request: Request, trace: list[StageResult]) -> StageResult:
-    built = next(r.output for r in trace if r.stage == "build_sql")
+    built = _sql_of(trace)
+    matched = next(r.output["matched_plan"] for r in trace if r.stage == "match")
     try:
         resolved = resolve(request.database)
     except CatalogError as error:
         return _failed("validate", str(error))
-    verdict = validate(built, resolved, make_lookup(resolved), _default_row_limit())
+    verdict = validate(built, resolved, make_lookup(resolved), _default_row_limit(), matched=matched)
     if not verdict["valid"]:
         return StageResult(stage="validate", status="failed", reason="; ".join(verdict["reasons"]), output=verdict)
     return _ok("validate", verdict)
 
 
+def _is_single_value(matched: dict[str, Any]) -> bool:
+    return bool(matched.get("metrics")) and not matched.get("dimensions")
+
+
 def stage_execute(request: Request, trace: list[StageResult]) -> StageResult:
-    built = next(r.output for r in trace if r.stage == "build_sql")
-    aggregate = next(r.output["matched_plan"] for r in trace if r.stage == "match").get("aggregation") is not None
+    built = _sql_of(trace)
+    aggregate = _is_single_value(next(r.output["matched_plan"] for r in trace if r.stage == "match"))
     try:
         resolved = resolve(request.database)
         result = execute(built, resolved.db_file, _default_row_limit(), aggregate)
@@ -218,7 +323,16 @@ def stage_execute(request: Request, trace: list[StageResult]) -> StageResult:
 
 
 def stage_respond(request: Request, trace: list[StageResult]) -> StageResult:
-    return _ok("respond", {"status": "ok"})
+    generated = _sql_of(trace)
+    executed = next(r.output for r in trace if r.stage == "execute")
+    summary = {
+        "status": "ok",
+        "sql": generated["sql"],
+        "params": generated["params"],
+        "row_count": executed["row_count"],
+        "truncated": executed["truncated"],
+    }
+    return _ok("respond", summary)
 
 
 STAGES: tuple[tuple[str, StageFn], ...] = (
@@ -228,7 +342,8 @@ STAGES: tuple[tuple[str, StageFn], ...] = (
     ("llm", stage_llm),
     ("plan", stage_plan),
     ("match", stage_match),
-    ("build_sql", stage_build_sql),
+    ("sql_prompt", stage_sql_prompt),
+    ("sql_generate", stage_sql_generate),
     ("validate", stage_validate),
     ("execute", stage_execute),
     ("respond", stage_respond),
@@ -263,10 +378,12 @@ def _run_stage(name: str, stage_fn: StageFn, request: Request, trace: list[Stage
 
 
 def _log_line(result: StageResult) -> str:
-    """One JSON line per stage. Prompt text and result rows are left out: the log keeps the prompt size and the row count."""
+    """One JSON line per stage. Prompt text, model replies and result rows are left out: the log keeps sizes and counts."""
     output = dict(result.output)
-    if result.stage == "prompt":
+    if result.stage in ("prompt", "sql_prompt"):
         output.pop("prompt", None)
+    if result.stage in ("llm", "sql_generate"):
+        output.pop("raw_reply", None)
     if result.stage == "execute":
         output.pop("rows", None)
     return json.dumps(

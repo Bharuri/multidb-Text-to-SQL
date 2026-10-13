@@ -24,12 +24,28 @@ retrieval:
   max_prompt_chars: 60000
   value_list_threshold: 30
 
-llm:
+planner_llm:
   provider: bedrock
   model_id: us.amazon.nova-2-lite-v1:0
   region: us-east-1
   temperature: 0
   max_output_tokens: 2048
+
+sql_generator_llm:
+  provider: bedrock
+  model_id: us.amazon.nova-2-lite-v1:0
+  region: us-east-1
+  temperature: 0
+  max_output_tokens: 2048
+
+capabilities:
+  group_by: true
+  having: true
+  order_by: true
+  date_grains: true
+  calculations: true
+  joins: false
+  simple_sql_builder: false
 
 logging:
   file: logs/query.log

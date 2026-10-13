@@ -66,8 +66,13 @@ def matched(**overrides: Any) -> dict[str, Any]:
     plan = {
         "table": TABLE,
         "select": [],
-        "aggregation": {"function": "COUNT", "column": "*"},
+        "dimensions": [],
+        "metrics": [{"function": "COUNT", "column": "*", "alias": "count"}],
         "filters": [],
+        "group_by": [],
+        "having": [],
+        "order_by": [],
+        "calculations": [],
         "limit": None,
         "matches": [],
     }
@@ -87,6 +92,10 @@ class ValidBuiltSqlTests(unittest.TestCase):
     def assert_valid(self, built: dict[str, Any]) -> None:
         result = validate(built, RESOLVED, lookup)
         self.assertEqual(result, {"valid": True, "reasons": []}, built["sql"])
+
+    def assert_valid_sql(self, sql: str, params: list[Any] | None = None) -> None:
+        result = check(sql, params)
+        self.assertEqual(result, {"valid": True, "reasons": []}, sql)
 
     def test_row_query_with_stored_value_and_limit(self) -> None:
         built = built_for(select=["Sales"], filters=[{"column": "Category", "operator": "=", "value": "Phones"}], limit=50)
@@ -111,8 +120,52 @@ class ValidBuiltSqlTests(unittest.TestCase):
         self.assert_valid(built_for(filters=[{"column": "Sales", "operator": "BETWEEN", "value": [10, 20.5]}]))
 
     def test_aggregates(self) -> None:
-        self.assert_valid(built_for(aggregation={"function": "SUM", "column": "Sales"}))
-        self.assert_valid(built_for(aggregation={"function": "COUNT", "column": "Region"}))
+        self.assert_valid(built_for(metrics=[{"function": "SUM", "column": "Sales", "alias": "total"}]))
+        self.assert_valid(built_for(metrics=[{"function": "COUNT", "column": "Region", "alias": "n"}]))
+
+    def test_grouped_aggregate_with_having_order_and_limit(self) -> None:
+        built = built_for(
+            dimensions=["Category"],
+            group_by=["Category"],
+            metrics=[{"function": "SUM", "column": "Sales", "alias": "total"}],
+            having=[{"metric": "total", "operator": ">=", "value": 100}],
+            order_by=[{"ref": "total", "direction": "DESC"}],
+            limit=5,
+        )
+        self.assert_valid(built)
+
+    def test_multiple_dimensions_and_metrics_with_having_and_order(self) -> None:
+        built = built_for(
+            dimensions=["Region", "Category"],
+            group_by=["Region", "Category"],
+            metrics=[
+                {"function": "SUM", "column": "Sales", "alias": "total"},
+                {"function": "COUNT", "column": "*", "alias": "n"},
+            ],
+            having=[{"metric": "total", "operator": ">=", "value": 100}],
+            order_by=[{"ref": "total", "direction": "DESC"}, {"ref": "Region", "direction": "ASC"}],
+            limit=10,
+        )
+        self.assert_valid(built)
+
+    def test_raw_grouped_query_with_ascending_order(self) -> None:
+        self.assert_valid_sql(f'SELECT "Category", COUNT(*) AS n FROM {qualified()} GROUP BY "Category" ORDER BY "Category" ASC LIMIT 5')
+
+    def test_year_over_year_change_with_parameters(self) -> None:
+        sql = (
+            f'SELECT "Category", SUM("Sales") AS total, '
+            f'SUM("Sales") - LAG(SUM("Sales")) OVER (PARTITION BY "Category" ORDER BY "Category") AS change '
+            f'FROM {qualified()} GROUP BY "Category" ORDER BY "Category" LIMIT 10'
+        )
+        self.assert_valid_sql(sql)
+
+    def test_percentage_growth_with_parameters(self) -> None:
+        sql = (
+            f'SELECT "Category", ((SUM("Sales") - LAG(SUM("Sales")) OVER (PARTITION BY "Category" ORDER BY "Category")) '
+            f'/ NULLIF(LAG(SUM("Sales")) OVER (PARTITION BY "Category" ORDER BY "Category"), ?)) * ? AS growth '
+            f'FROM {qualified()} GROUP BY "Category" ORDER BY "Category" LIMIT 10'
+        )
+        self.assert_valid_sql(sql, [0, 100])
 
     def test_boolean_stored_value(self) -> None:
         self.assert_valid(built_for(filters=[{"column": "Returned", "operator": "=", "value": "Yes"}]))
@@ -179,8 +232,67 @@ class RejectedSqlTests(unittest.TestCase):
     def test_star_select_is_rejected(self) -> None:
         self.assert_rejected(f"SELECT * FROM {qualified()} LIMIT 5")
 
-    def test_group_by_is_rejected(self) -> None:
+    def test_grouped_aggregate_without_limit_is_rejected(self) -> None:
         self.assert_rejected(f'SELECT "Category", COUNT(*) FROM {qualified()} GROUP BY "Category"')
+
+    def test_grouped_aggregate_with_large_limit_is_rejected(self) -> None:
+        self.assert_rejected(f'SELECT "Category", COUNT(*) FROM {qualified()} GROUP BY "Category" LIMIT 5000')
+
+    def test_rollup_is_rejected(self) -> None:
+        self.assert_rejected(f'SELECT "Category", COUNT(*) FROM {qualified()} GROUP BY ROLLUP("Category") LIMIT 5')
+
+    def test_cte_is_rejected(self) -> None:
+        self.assert_rejected(f'WITH x AS (SELECT "Sales" FROM {qualified()}) SELECT "Sales" FROM x LIMIT 5')
+
+    def test_row_number_window_is_rejected(self) -> None:
+        self.assert_rejected(f'SELECT "Sales", ROW_NUMBER() OVER (ORDER BY "Sales") AS rn FROM {qualified()} LIMIT 5')
+
+    def test_literal_in_nullif_is_rejected(self) -> None:
+        sql = (
+            f'SELECT "Category", SUM("Sales") / NULLIF(SUM("Sales"), 0) AS ratio '
+            f'FROM {qualified()} GROUP BY "Category" LIMIT 5'
+        )
+        self.assert_rejected(sql)
+
+    def test_literal_window_offset_is_rejected(self) -> None:
+        self.assert_rejected(f'SELECT "Sales", LAG("Sales", 2) OVER (ORDER BY "Sales") AS prev FROM {qualified()} LIMIT 5')
+
+    def test_having_on_plain_column_is_rejected(self) -> None:
+        self.assert_rejected(
+            f'SELECT "Category", COUNT(*) AS n FROM {qualified()} GROUP BY "Category" HAVING "Category" = ? LIMIT 5',
+            ["Phones"],
+        )
+
+    def test_having_with_literal_is_rejected(self) -> None:
+        self.assert_rejected(
+            f'SELECT "Category", COUNT(*) AS n FROM {qualified()} GROUP BY "Category" HAVING COUNT(*) > 5 LIMIT 5'
+        )
+
+    def test_order_by_unknown_column_is_rejected(self) -> None:
+        self.assert_rejected(f'SELECT "Category", COUNT(*) AS n FROM {qualified()} GROUP BY "Category" ORDER BY "Nope" LIMIT 5')
+
+    def test_order_by_ungrouped_column_is_rejected(self) -> None:
+        self.assert_rejected(f'SELECT "Category", COUNT(*) AS n FROM {qualified()} GROUP BY "Category" ORDER BY "Region" LIMIT 5')
+
+    def test_plan_table_mismatch_is_rejected(self) -> None:
+        built = built_for(select=["Sales"], limit=5)
+        result = validate(built, RESOLVED, lookup, matched=matched(table="Other", select=["Sales"], metrics=[], limit=5))
+        self.assertFalse(result["valid"])
+
+    def test_plan_metric_mismatch_is_rejected(self) -> None:
+        built = built_for(metrics=[{"function": "SUM", "column": "Sales", "alias": "total"}])
+        result = validate(built, RESOLVED, lookup, matched=matched(metrics=[{"function": "MAX", "column": "Sales", "alias": "total"}]))
+        self.assertFalse(result["valid"])
+
+    def test_plan_dimension_mismatch_is_rejected(self) -> None:
+        built = built_for(dimensions=["Category"], group_by=["Category"], metrics=[{"function": "COUNT", "column": "*", "alias": "n"}], limit=5)
+        result = validate(built, RESOLVED, lookup, matched=matched(dimensions=["Region"], group_by=["Region"], metrics=[{"function": "COUNT", "column": "*", "alias": "n"}], limit=5))
+        self.assertFalse(result["valid"])
+
+    def test_plan_consistent_query_is_accepted(self) -> None:
+        built = built_for(dimensions=["Category"], group_by=["Category"], metrics=[{"function": "COUNT", "column": "*", "alias": "n"}], limit=5)
+        plan = matched(dimensions=["Category"], group_by=["Category"], metrics=[{"function": "COUNT", "column": "*", "alias": "n"}], limit=5)
+        self.assertTrue(validate(built, RESOLVED, lookup, matched=plan)["valid"])
 
     def test_mixed_columns_and_aggregate_is_rejected(self) -> None:
         self.assert_rejected(f'SELECT "Sales", COUNT(*) FROM {qualified()}')
