@@ -201,6 +201,16 @@ Flagged values are reported, not removed or corrected.
 
 None in this schema.
 
+## Metric definitions
+
+Format and lifecycle are in [requirement_retrival.md](../../retrival/requirement_retrival.md) §6.1 and [design.md](../../retrival/design.md) §3.3.
+
+No metrics are authored for this database. Metrics are proposed from the schema and the question, then saved only when the user accepts them in the UI.
+
+```yaml
+metrics: []
+```
+
 ## Acceptance criteria
 
 - The YAML covers all 25 columns in `sample_superstore`'s physical mapping, with the same names.

@@ -28,6 +28,9 @@ SYNONYMS_PATH = SEMANTIC_YAML_DIR / "synonyms.yaml"
 INTEGER_TYPES = ("BIGINT", "INTEGER", "SMALLINT", "TINYINT", "HUGEINT")
 FLOAT_TYPES = ("DOUBLE", "FLOAT", "REAL", "DECIMAL", "NUMERIC")
 CATEGORY_LIMIT = 30
+CARDINALITIES = {"one_to_one", "many_to_one", "one_to_many", "many_to_many", "unknown"}
+NORMALIZATION_OPS = ("lower", "trim")
+NORMALIZATION_CAST_TYPES = ("BIGINT", "VARCHAR", "DOUBLE", "DATE")
 
 PHYSICAL_TABLES_HEADER = ["Table", "Source sheet", "Rows", "Columns"]
 PHYSICAL_COLUMNS_HEADER = ["Column", "Type", "Nullable", "Has NULLs", "Unique"]
@@ -48,6 +51,7 @@ BACKTICK_PATTERN = re.compile(r"`([^`]*)`")
 VALUE_LINE_PATTERN = re.compile(r"- `[^`]*`")
 VALUE_HEADING_PATTERN = re.compile(r"`([^`]+)` \((categorical|boolean), (\d+) values?\)")
 CHECK_PATTERN = re.compile(r"^- `([^`]+)`: child (\S+), parent (\S+), orphan rows (\d+)$")
+METRIC_BLOCK_PATTERN = re.compile(r"```yaml\n(.*?)\n```", re.DOTALL)
 
 
 def read_lines(path: Path) -> list[str]:
@@ -119,6 +123,35 @@ def bullet_value(body: list[str], label: str, where: str) -> str:
         if line.strip().startswith(prefix):
             return line.strip()[len(prefix):]
     raise ValueError(f"'{label}' missing in {where}")
+
+
+def optional_bullet_value(body: list[str], label: str) -> str | None:
+    prefix = f"- {label}: "
+    for line in body:
+        if line.strip().startswith(prefix):
+            return line.strip()[len(prefix):]
+    return None
+
+
+def parse_normalization(text: str, name: str) -> list[str]:
+    """Parse one endpoint's structured normalization: `none` or a comma-separated ordered list of allowlisted ops."""
+    if text == "none":
+        return []
+    ops = []
+    for part in text.split(","):
+        op = " ".join(part.split())
+        if op in NORMALIZATION_OPS:
+            ops.append(op)
+            continue
+        cast = re.fullmatch(r"cast (\w+)", op)
+        if cast and cast.group(1) in NORMALIZATION_CAST_TYPES:
+            ops.append(op)
+            continue
+        raise ValueError(
+            f"relationship {name}: normalization op {op!r} is not allowed; "
+            f"use none, {', '.join(NORMALIZATION_OPS)}, or cast <{'|'.join(NORMALIZATION_CAST_TYPES)}>"
+        )
+    return ops
 
 
 def is_numeric(data_type: str) -> bool:
@@ -210,6 +243,18 @@ def parse_relationships(secs: dict[str, list[str]]) -> list[dict]:
         enforceable_now = yes_no(enforceable)
         if yes_no(bullet_value(detail, "Enforceable now", name)) != enforceable_now:
             raise ValueError(f"relationship {name}: enforceable flag differs between table and detail")
+        cardinality = cardinality.replace("-", "_")
+        if cardinality not in CARDINALITIES:
+            raise ValueError(f"relationship {name}: cardinality must be one of {sorted(CARDINALITIES)}")
+        enabled = yes_no(bullet_value(detail, "Enabled for joins", name))
+        join_policy = bullet_value(detail, "Join policy", name)
+        if join_policy not in ("inner", "left"):
+            raise ValueError(f"relationship {name}: join policy must be inner or left, got {join_policy!r}")
+        normalization = {
+            "child": parse_normalization(bullet_value(detail, "Normalization child", name), name),
+            "parent": parse_normalization(bullet_value(detail, "Normalization parent", name), name),
+        }
+        fan_out = optional_bullet_value(detail, "Fan-out") or "none"
         child_table, child_column = split_reference(child)
         parent_table, parent_column = split_reference(parent)
         issues = bullet_value(detail, "Issues", name)
@@ -232,6 +277,10 @@ def parse_relationships(secs: dict[str, list[str]]) -> list[dict]:
                 "meaning": bullet_value(detail, "Meaning", name),
                 "cardinality": cardinality,
                 "enforceable_now": enforceable_now,
+                "enabled": enabled,
+                "join_policy": join_policy,
+                "normalization": normalization,
+                "fan_out": fan_out,
                 "child": {"table": child_table, "column": child_column},
                 "parent": {"table": parent_table, "column": parent_column},
                 "issues": [] if issues == "none" else [issues],
@@ -284,6 +333,20 @@ def stored_side(found: list[str] | None, key: str, side: str, values: list[str],
     if len(found) != 1 or found[0] not in values:
         raise ValueError(f"{key}: '{side}' must be one of the listed values")
     return to_value(found[0], data_type)
+
+
+def parse_metrics(lines: list[str]) -> list[dict]:
+    """Read the one fenced yaml block under '## Metric definitions'. read_lines drops CR, so lines are LF-only."""
+    body = sections(lines, 2).get("Metric definitions")
+    if body is None:
+        raise ValueError("missing '## Metric definitions' section")
+    match = METRIC_BLOCK_PATTERN.search("\n".join(body))
+    if match is None:
+        raise ValueError("'## Metric definitions' needs one fenced yaml block")
+    data = yaml.safe_load(match.group(1))
+    if not isinstance(data, dict) or set(data) != {"metrics"} or not isinstance(data["metrics"], list):
+        raise ValueError("metric block must be a mapping with one 'metrics' list")
+    return data["metrics"]
 
 
 def parse_semantic(path: Path) -> dict:
@@ -374,6 +437,7 @@ def parse_semantic(path: Path) -> dict:
         "schema_mapping": schema_mapping,
         "numeric_operators": numeric_operators,
         "columns": columns,
+        "metrics": parse_metrics(lines),
     }
 
 
@@ -448,12 +512,18 @@ def main() -> int:
         print(f"error in {SYNONYMS_PATH.name}: unknown schemas {sorted(unknown_schemas)}")
         return 1
 
+    # Imported here because metadata_validator imports this module at load time.
+    from src.mapping.metadata_validator import validate_metrics
+
     outputs: list[tuple[Path, dict]] = []
     for stem in sorted(physical_files):
         try:
             physical = parse_physical(physical_files[stem])
             semantic = parse_semantic(semantic_files[stem])
             check_pair(stem, physical, semantic)
+            metric_errors = validate_metrics(semantic["metrics"], stem, semantic["columns"])
+            if metric_errors:
+                raise ValueError("\n  ".join(metric_errors))
             apply_synonyms(stem, semantic, synonym_entries)
         except ValueError as exc:
             print(f"error in {stem}: {exc}")

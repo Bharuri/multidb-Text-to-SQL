@@ -133,6 +133,14 @@ Flagged values are reported, not removed or corrected.
 - `netflix_titles.release_year`: **suspect_range**. outside 1800..2026; min/max keep the stored value, but it is probably a data error (values: 80119194.0)
 - `netflix_titles.type`: **suspect_value**. looks like a year or date, not a category; kept in values; review before use (values: 1944)
 
+## Metric definitions
+
+Format and lifecycle are in [requirement_retrival.md](../../retrival/requirement_retrival.md) §6.1 and [design.md](../../retrival/design.md) §3.3.
+
+```yaml
+metrics: []
+```
+
 ## Acceptance criteria
 
 - The YAML covers all 17 columns in `netflix_titles`'s physical mapping, with the same names.

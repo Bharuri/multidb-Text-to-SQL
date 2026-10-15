@@ -59,7 +59,24 @@ Describe the `_113thCongress` schema in `databases/_113thCongress.duckdb`: its 2
 
 ## Relationships between tables
 
-No relationship is approved between the tables in `_113thCongress`. The tables are not linked, so the SQL generator emits no `FOREIGN KEY` for them.
+| Relationship | Child (table.column) | Parent (table.column) | Cardinality | Enforceable now |
+|---|---|---|---|---|
+| `fk_bills_source_url` | `Bills.Source_URL` | `Sunlight_Info.Source_URL` | many-to-one | no |
+
+### `fk_bills_source_url`
+
+- Status: approved
+- Meaning: Each bill links to one Sunlight record by its source URL. Sunlight_Info has one row per URL after normalization.
+- Enforceable now: no
+- Enabled for joins: yes
+- Join policy: left
+- Normalization child: lower, trim
+- Normalization parent: lower, trim
+- Normalization note: raw exact matching finds 0 rows, so this normalization is required on both sides.
+- Fan-out: none after normalization; Sunlight_Info is unique per normalized URL, and every bill matches exactly one row.
+- Issues: raw URLs differ in case and whitespace, so a foreign key is not declared on raw values
+- Checks:
+  - `Source_URL`: child VARCHAR, parent VARCHAR, orphan rows 0
 
 ## Key candidates
 

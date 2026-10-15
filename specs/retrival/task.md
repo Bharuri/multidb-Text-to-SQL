@@ -1,62 +1,100 @@
-# Tasks: Natural-language analytics over one database
 
-Build order: the UI and shared contracts first, then deterministic metadata and plan validation, then the two LLM calls and SQL validation. Keep the existing Streamlit layout and add visible stage panels rather than redesigning the UI.
+# Tasks — Generic Natural-Language-to-SQL Analytics
 
-## Stage outputs shown in the UI
+This task list is a fresh implementation plan based on `requirements.md`, `design.md`, and `evaluation_questions.md`. Complete tasks in order unless a dependency is explicitly documented. Each task should leave the application in a runnable state. Do not implement question-specific SQL templates or branches.
 
-| Stage | Output shown |
-|---|---|
-| 1 Submit | Database, question, `credentials_supplied` |
-| 2 Resolve | Registry entry, file paths, table/column counts, business metadata status |
-| 3 Planner Prompt | Prompt text or safe preview, character count, configured limit |
-| 4 Planner LLM | Raw planner reply, streamed as it arrives |
-| 5 Parse Plan | Parsed plan JSON, `cannot_answer` reason, or rejection reason |
-| 6 Match and Validate Plan | Matched plan and match details, or unmatched/ambiguous item with candidates |
-| 7 SQL Prompt | SQL-generator prompt preview, character count, configured limit |
-| 8 SQL Generation | Raw SQL-generator reply, streamed as it arrives; parsed SQL and parameters |
-| 9 Validate SQL | `valid` and validation reasons |
-| 10 Execute | Row count and result rows/table, or safe runtime error |
-| 11 Respond | Final status, final SQL/parameters when available, result summary |
+## Execution rules for the coding agent
 
-A failed stage shows its reason, and later stages are skipped. The two LLM calls have separate trace entries.
+1. Read all three specification files and the benchmark before editing code.
+2. Inspect the current repository and report the actual starting state; do not assume files/modules exist.
+3. Treat `requirements.md` as product behavior and `design.md` as the technical contract. If they conflict, stop and report the conflict instead of guessing.
+4. Before implementation, create a capability matrix for all 30 questions and identify missing metadata/ambiguous business definitions.
+5. Implement one task at a time. For each task: make focused changes, add tests, run tests and Ruff, summarize changed files and outcomes.
+6. Never add a production branch keyed to a question, benchmark ID, exact question text, or dataset name to make an individual benchmark pass.
+7. Use fake/mock LLM responses for routine tests. Live provider tests are optional and must not be required for the local test suite.
+8. Do not silently simplify unsupported queries. Return a structured rejection or clarification.
+9. Do not expose credentials, secrets, or stack traces in the UI/logs.
+10. Keep Streamlit UI minimal and preserve the existing interface where possible; add trace panels rather than redesigning the application.
 
-## UI layout
+## Phase A — Repository and data foundation
 
-- **Ask tab:** keep the question box and Ask button. Directly below them, show the final status, the final SQL with parameters when available, and the results. If the query does not run, show the first failed stage's reason.
-- **Step plan tab:** keep the existing step-panel approach. Show one panel for every stage above. Show planner and SQL-generator output separately, and stream each model response into its own panel.
-- **Run SQL tab:** a manual SQL box. It runs one typed read-only SELECT or WITH statement on a read-only connection to the selected database, capped at `default_row_limit`. It does not go through the planner or validator, and the read-only connection blocks writes.
-- Do not change navigation, styling, or the overall app layout.
+| Task | Work | Acceptance criteria |
+|---|---|---|
+| A1. Repository audit | Inspect source tree, dependency pins, current UI, config, tests, current pipeline, and existing metadata. Produce a short gap report against all specifications before editing. | No assumptions about nonexistent modules; report lists reuse/replace decisions and conflicts. |
+| A2. Workbook inventory | Inspect all sheets/columns in the four supplied workbooks. Profile row counts, types, nulls, duplicates, candidate keys, and likely row grain. | Inventory includes exact sheet and column names and flags uncertain keys/relationships. |
+| A3. Deterministic ingestion | Build repeatable ingestion scripts to create one DuckDB file per workbook/domain, using explicit column mappings and type handling. | Re-running ingestion yields the same schema and row counts; source-to-physical mapping is documented. |
+| A4. Data-quality/relationship profiling | Verify unique keys, one-to-many paths, title duplication risk, vote grain, and candidate join keys. Define only evidence-backed relationships. | Relationship file includes cardinality and enabled status; unsupported joins are absent or disabled. |
+| A5. Metadata contract | Define strict physical, semantic, and relationship metadata schemas and sample metadata for all four datasets. | Metadata validation checks names/types/references; invalid files fail with actionable errors. |
 
-## Tasks
+## Phase B — Deterministic catalog and semantic resolution
 
-| # | Task | Output | Done when |
-|---|---|---|---|
-| 0 | Build or retain the UI first with stub stages. Create `app.py` and `pipeline.py` with the shared `StageResult`, stage callbacks, placeholders, and one failure stub. | Streamlit app and stub pipeline | Ask fills panels in order; a failure marks later panels skipped; replacing a stub does not require UI layout changes. |
-| 1 | Update `config.yaml` with the database registry, row and prompt limits, the high-cardinality threshold, planner and SQL-generator LLM settings, and feature flags for supported query capabilities. | Config file | Each registered database points to its own physical, semantic/business metadata and DuckDB file; unknown names error without fallback. |
-| 2 | Extend the YAML generator so every physical `DATE`/`TIMESTAMP` column receives supported date operators from its physical type. Include Boolean `true`/`false` values and regenerate metadata. | Updated YAML | All date columns receive generated operators; no date column is hand-edited. |
-| 3 | Define the shared request, `StageResult`, `Response`, `Plan`, `MatchedPlan`, and `GeneratedQuery` shapes. Document the versioned plan and SQL-generation JSON schemas. | Shared types/schema | Both LLM replies are parsed against strict schemas; the trace can represent every stage and streaming update. |
-| 4 | Build or extend `catalog.py`: registry lookup, path checks, YAML load, database/schema-key checks, cache by modification time, and optional business semantics/relationship metadata loading. | Module | Unknown database, missing files, mismatched paths/schema keys, and malformed metadata fail at Resolve. |
-| 5 | Build `matcher.py` for table, column, dimension, metric, filter, operator, aggregation, date-grain, and business-concept matching. Use exact, then normalized, then synonym matching, and reject ambiguity. | Module | Fixed plans match deterministically; unmatched and ambiguous items include candidates; invalid numeric/date values reject. |
-| 6 | Build or extend `lookup.py` for high-cardinality columns. | Module | One stored-value match accepts; zero or multiple matches reject; all lookup values are parameterized and the lookup is bounded. |
-| 7 | Define the supported query-plan schema and build `plan.py` to remove an optional code fence, parse JSON, reject extra keys or text, and detect `cannot_answer`. Include dimensions, multiple metrics, filters, `group_by`, `having`, `order_by`, `calculations`, and `limit`. | Module and schema tests | Valid plans parse; malformed JSON, extra keys or text, invalid shapes, and unsupported calculations reject. |
-| 8 | Build `prompt.py` for the planner. Include the selected database's metadata, stored low-cardinality values, date/numeric operators, business definitions, supported query features, and the strict JSON contract. Enforce `max_prompt_chars`. | Planner prompt module | The prompt includes only selected-database context; an oversize prompt stops before the planner call; the prompt stage is visible. |
-| 9 | Build `llm.py` planner client using Bedrock `ConverseStream` (or the configured supported API). Pass chunks to a callback and return the full reply. | Planner LLM module | Chunks reach the callback before completion; failures return safe errors; credentials are never logged. |
-| 10 | Build `business_semantics.py` or an equivalent catalog layer for metric definitions, synonyms, dimensions, approved calculations, and optional relationship metadata. Do not try to encode every question as a rule. | Business semantics layer and examples | Configured definitions are authoritative; ambiguous or undefined concepts are not silently guessed; metadata is scoped to the selected database. |
-| 11 | Build the deterministic plan validator/matcher integration. Validate supported aggregation types, dimension references, grouping consistency, filter shapes, `HAVING`, ordering, date grain, calculation inputs, and configured feature flags. | Validated matched plan | Unsupported or ambiguous operations reject before SQL generation; the same plan and metadata produce the same result. |
-| 12 | Build `sql_prompt.py` (or extend `prompt.py`) for the SQL-generator LLM. Provide the original question, matched plan, physical schema, relevant business definitions, supported dialect/features, and the strict JSON output schema. | SQL prompt module | The prompt tells the model to use only approved schema and plan elements, and to return SQL with placeholders plus a separate parameter list; the size limit is enforced. |
-| 13 | Build the SQL-generator LLM call in `llm.py`, separate from the planner call. Stream chunks to the stage-8 callback. Parse a strict response such as `{"sql":"... ? ...", "params":[...]}`. | SQL generation module | The call is distinct and visible; malformed output fails; there is no automatic retry; the raw reply and parsed output are traced safely. |
-| 14 | Implement `sql_builder.py` as an optional deterministic path for supported simple plans, or as shared helpers for quoting identifiers and binding values. Do not require it to implement every advanced business calculation. | SQL builder/helpers | Simple queries can use a deterministic path; values remain parameters; the trace says which generation path was used. |
-| 15 | Build `validator.py` using SQL parsing (AST or DuckDB parsing) plus an explicit allowlist. Validate a single read-only query, selected-database tables and columns, approved joins, functions, grouping, CTE and window-function use, placeholders, parameters, limits, and consistency with the matched plan. | SQL validator | Unsafe, multiple, or write statements, unknown identifiers, unapproved joins or functions, interpolated values, invalid grouping, and parameter mismatches reject before execution. |
-| 16 | Build `executor.py` using a read-only DuckDB connection and enforce row and result limits. | Executor | Write statements cannot execute; only validated SQL runs; runtime errors are safe and do not expose stack traces to users. |
-| 17 | Build the pipeline with the stages in the table above. Stop at the first failure, mark later stages skipped, log one structured record per stage, and invoke callbacks in order. | Pipeline module | The trace and logs agree; callbacks fire in order; planner and SQL-generator streams are separate; credentials never enter the trace or logs. |
-| 18 | Connect `app.py` to the real stages without redesigning the UI. | Streamlit app | One click makes one request; an empty question shows “Enter a question first.”; each stage appears before the next begins; both LLM responses stream into their panels. |
-| 19 | Write unit tests for plan parsing, matching, business semantics, SQL-generation parsing, the SQL builder, and the validator, using fixed plans and replies. No live LLM is required. | Unit test suite | Tests cover rows, aggregates, grouped queries, multiple metrics, `HAVING`, sorting, dates, YoY, ambiguity, unsafe SQL, and parameters. |
-| 20 | Write trace tests for success and failure at every stage. | Trace tests | All stages appear on success; stages after a failure are skipped; the trace and log contain no credentials; each LLM call is separately visible. |
-| 21 | Write end-to-end tests with mocked planner and SQL-generator replies. | E2E test suite | Acceptance criteria pass without Bedrock; wrong or ambiguous plans and unsafe SQL never execute. |
-| 22 | Run live Bedrock tests with reviewed examples, including grouped sales, multiple dimensions, yearly sales, YoY growth, and unsupported or ambiguous business concepts. | Test report | The trace shows each stage; answers are checked against known expected DuckDB results; no unapproved SQL executes. |
+| Task | Work | Acceptance criteria |
+|---|---|---|
+| B1. Registry and config | Implement typed configuration for databases, metadata paths, models, limits, capability flags, and privacy settings. | Unknown database, missing file, and mismatched metadata identity fail before LLM calls. |
+| B2. Cached metadata catalog | Load/normalize metadata once per version fingerprint; invalidate when files change. | Repeated requests reuse cached catalog; modifying a metadata file reloads only the affected catalog. |
+| B3. Relevant context retrieval | Resolve question terms to relevant tables, columns, metrics, date roles, semantics, and relationship paths. Never send every metadata file to each LLM. | Tests verify prompts contain relevant context only and never cross database boundaries. |
+| B4. Semantic resolver | Resolve metric/dimension synonyms and detect undefined/ambiguous concepts. | Defined concepts map deterministically; undefined concepts request clarification or reject. |
+| B5. Query observability models | Define `StageResult`, `Response`, structured failure categories, trace bounds, and logging policy. | Trace and log stage identity/status agree; secrets are excluded. |
 
-## Suggested order
+## Phase C — Planner and plan contract
 
-`0 → 1–3 → 4–7 → 8–11 → 12–13 → 14–17 → 18 → 19–22`
+| Task | Work | Acceptance criteria |
+|---|---|---|
+| C1. Versioned plan schema | Implement strict schema/models for sources, joins, filters, stages/dependencies, expressions, windows, existence tests, set operations, final output, and clarification outcomes. | Valid example plans parse; unknown keys, raw SQL expressions, invalid enums, and broken references reject. |
+| C2. Planner prompt | Build prompt from question, relevant metadata, semantic definitions, enabled capabilities, and schema instructions. Enforce configured prompt size. | Prompt is deterministic for identical inputs and contains no unrelated metadata or secrets. |
+| C3. Planner client | Implement Planner LLM client with provider abstraction and streaming callback where supported. | Mocked and live adapter tests pass; exceptions become safe stage failures. |
+| C4. Planner output parser | Parse one JSON object; validate schema version, exact structure, and outcomes. | Malformed JSON, extra prose, unknown keys, and invalid statuses are rejected. |
+| C5. Deterministic plan validator | Resolve all identifiers, operators, metrics, relationships, stage dependencies, grain changes, aggregate rules, window requirements, and feature flags. | Plan is rejected before SQL generation if any reference/relationship/capability is ambiguous or unsupported. |
+| C6. Join/grain safety | Validate join paths and cardinality; detect likely fan-out and require pre-aggregation or reject. | Tests cover one-to-many joins, many-to-many relationships, duplicate dimension rows, and safe pre-aggregation. |
 
-Build deterministic plan validation and SQL validation before relying on live LLM output. Test both LLMs with fixed replies first. Allow SQL-generator freedom only for query constructs the validator explicitly supports. Keep the current UI structure, and add stage panels rather than redesigning the app.
+## Phase D — SQL generation and validation
+
+| Task | Work | Acceptance criteria |
+|---|---|---|
+| D1. SQL Generator prompt | Supply original question, validated plan, relevant physical/semantic metadata, relationship paths, DuckDB dialect, enabled features, and strict output schema. | Prompt cannot request unapproved sources; output contract is explicit. |
+| D2. SQL Generator client | Implement separate model call and streaming trace. | Tests prove Planner and SQL Generator are separate calls with separate outputs/stages. |
+| D3. Generated SQL parser | Parse strict JSON `{sql, params, assumptions}`; validate types, keys, placeholder count and ordering. | Malformed response and parameter mismatches reject before AST validation. |
+| D4. Optional simple-query builder | Implement only a declared subset as deterministic fast path if useful. Otherwise keep shared identifier/parameter helpers only. | Fast path uses the same validator/executor and never claims to support advanced plan shapes it cannot represent. |
+| D5. SQL AST validator foundation | Parse one query and recursively inspect all nodes, CTEs, subqueries, joins, set branches, table scans, columns, and functions. | Forbidden statements/external access/multiple statements are rejected even when nested in a CTE/subquery. |
+| D6. Plan-to-SQL consistency | Check generated SQL against validated plan: source tables, join edges, filters, output aliases, metrics, grain, and calculations. | Query cannot add unplanned sources/metrics/filters or omit required outputs without rejection. |
+| D7. Capability allowlists | Add explicit feature gates and AST checks for basic aggregation, CTEs, nested/correlated subqueries, `CASE`, conditional aggregates, windows, date math, ranking, percentiles, and set operations. | Each enabled feature has positive and negative tests; disabled syntax is rejected. |
+| D8. Complexity and parameter safety | Enforce SQL length, CTE/nesting/join limits, safe parameter binding, row/result limits, and query timeout. | Limits are tested; no user data value is interpolated into SQL. |
+
+## Phase E — Execution, pipeline, and UI
+
+| Task | Work | Acceptance criteria |
+|---|---|---|
+| E1. Read-only executor | Execute only validated SQL against the selected DuckDB file with bound params and result/resource caps. | Executor cannot run writes; runtime errors are safe; parameters are passed separately. |
+| E2. Pipeline orchestration | Implement all 14 logical stages from `design.md`, stop on first failure, mark later stages skipped, and return a trace. | Unit tests cover failure at each stage and confirm later stages are skipped. |
+| E3. Structured logging | Emit one structured record per stage with duration/status/failure category and privacy-safe fields. | No credentials or stack traces in user-facing output; trace/log stage order matches. |
+| E4. Streamlit integration | Wire database selector, question form, Ask/result view, Step Plan view, and Run SQL stub to pipeline. | Each stage updates visibly; Planner and SQL Generator responses are distinct; UI remains usable on failure. |
+| E5. Error and clarification UX | Show a focused clarification when needed; distinguish cannot-answer, rejected plan/SQL, runtime error, and success. | No silent fallback to another database, definition, or simpler query. |
+
+## Phase F — Testing and benchmark
+
+| Task | Work | Acceptance criteria |
+|---|---|---|
+| F1. Unit tests | Test metadata, semantic resolution, plan schema, plan validator, generated SQL parsing, AST validation, parameter binding, executor, and trace. | Unit suite runs offline without live LLM credentials. |
+| F2. Security tests | Test multiple statements, write statements, external file scans, unknown tables/columns, unapproved joins/functions, nested malicious SQL, CTE bypass attempts, parameter mismatch, and excessive complexity. | All unsafe cases reject before execution. |
+| F3. Synthetic edge fixtures | Create small deterministic datasets for ties, nulls, duplicate order lines, no second purchase, zero denominator, missing periods, and one-to-many fan-out. | Expected results are manually verified and stored with tests. |
+| F4. Benchmark manifest | Map each of the 30 questions to database, output grain, required metadata, capability tags, oracle method, and caveats. | All questions are mapped; questions needing unavailable fields or unsupported joins are flagged, not falsely marked pass/fail. |
+| F5. Independent result oracles | Derive expected outputs using independent reference SQL/manual calculations. Record assumptions for source-dependent questions. | Tests compare exact values/rows where deterministic, with documented numeric tolerance/order rules. |
+| F6. Benchmark runner | Run questions through mocked pipeline and, separately, live LLM pipeline; capture SQL, trace, results, timings, and failure category. | One report per run, no question-specific production code. |
+| F7. Capability coverage | For each feature family, add focused tests independent of benchmark wording. | Capabilities are tested generically and held-out questions are preserved. |
+| F8. Final regression and documentation | Run full tests, Ruff, ingestion reproducibility checks, and benchmark; update capability matrix and known limitations. | App launches; tests/lint pass or failures are documented; no claim of universal SQL support. |
+
+## Required implementation order
+
+A1 → A2 → A3 → A4 → A5 → B1–B5 → C1–C6 → D1–D8 → E1–E5 → F1–F8.
+
+Do not start by prompting the coding model to “solve all 30 questions.” First establish the data model and plan schema, then enable SQL capabilities one family at a time. If a task reveals that a requirement cannot be met, stop and propose a specification update rather than silently changing behavior.
+
+## Definition of done for every task
+
+- Focused implementation is complete.
+- Unit tests cover success, failure, and boundary cases.
+- Relevant tests pass.
+- Ruff passes on changed files (or pre-existing failures are identified separately).
+- Application remains runnable.
+- Changed files and decisions are summarized.
+- No benchmark-specific production branch/template has been added.

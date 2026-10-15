@@ -110,10 +110,18 @@ tables:
     is_unique: false
 relationships:
 - name: fk_netflix_titles_cast_show_id
-  status: proposed
+  status: approved
   meaning: Each child row is a credit for one title in the parent table.
-  cardinality: many-to-one
+  cardinality: many_to_one
   enforceable_now: false
+  enabled: true
+  join_policy: inner
+  normalization:
+    child: []
+    parent:
+    - cast BIGINT
+  fan_out: one title has many cast rows. Title-level metrics must use `count(distinct show_id)` or pre-aggregate
+    the bridge.
   child:
     table: netflix_titles_cast
     column: show_id
@@ -129,10 +137,18 @@ relationships:
     parent_type: DOUBLE
     orphan_rows: 10
 - name: fk_netflix_titles_category_show_id
-  status: proposed
-  meaning: Each child row is a credit for one title in the parent table.
-  cardinality: many-to-one
+  status: approved
+  meaning: Each child row is a category tag for one title in the parent table.
+  cardinality: many_to_one
   enforceable_now: false
+  enabled: true
+  join_policy: inner
+  normalization:
+    child: []
+    parent:
+    - cast BIGINT
+  fan_out: one title has many category rows. Title-level metrics must use `count(distinct show_id)` or
+    pre-aggregate the bridge.
   child:
     table: netflix_titles_category
     column: show_id
@@ -148,10 +164,18 @@ relationships:
     parent_type: DOUBLE
     orphan_rows: 3
 - name: fk_netflix_titles_countries_show_id
-  status: proposed
-  meaning: Each child row is a credit for one title in the parent table.
-  cardinality: many-to-one
+  status: approved
+  meaning: Each child row is a country credit for one title in the parent table.
+  cardinality: many_to_one
   enforceable_now: false
+  enabled: true
+  join_policy: inner
+  normalization:
+    child: []
+    parent:
+    - cast BIGINT
+  fan_out: one title has many country rows. Title-level metrics must use `count(distinct show_id)` or
+    pre-aggregate the bridge.
   child:
     table: netflix_titles_countries
     column: show_id
@@ -167,10 +191,18 @@ relationships:
     parent_type: DOUBLE
     orphan_rows: 2
 - name: fk_netflix_titles_directors_show_id
-  status: proposed
-  meaning: Each child row is a credit for one title in the parent table.
-  cardinality: many-to-one
+  status: approved
+  meaning: Each child row is a director credit for one title in the parent table.
+  cardinality: many_to_one
   enforceable_now: false
+  enabled: true
+  join_policy: inner
+  normalization:
+    child: []
+    parent:
+    - cast BIGINT
+  fan_out: one title has many director rows, and one (show_id, director) pair is duplicated. Title-level
+    metrics must use `count(distinct show_id)` or pre-aggregate the bridge.
   child:
     table: netflix_titles_directors
     column: show_id

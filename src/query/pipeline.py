@@ -1,421 +1,536 @@
-"""Eleven-stage question pipeline. Each stage reads the outputs of the stages before it and stops the run on failure."""
+"""Query pipeline orchestrator (E2).
+
+Runs the stages in order. The first failed stage stops the run, later stages are recorded as
+`skipped`, and the result is a `Response`. Each step returns a small output dict or raises
+`_StageFailure` with a design section 9.1 category. Unexpected exceptions become
+`internal_error` with only the exception type name in the reason.
+
+The planner writes a plain-text analysis inside a small JSON envelope. The SQL generator reads
+that analysis and writes free SQL. Deterministic checks then cover the SQL: AST shape, limits,
+column names, and listed literal values.
+
+LLM clients can be passed in for tests. Otherwise the planner and SQL generator are built
+from the registry settings.
+"""
 
 from __future__ import annotations
 
-import json
-import logging
 import time
 from collections.abc import Callable
-from dataclasses import dataclass, field, replace
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
-from src.query.business_semantics import BusinessError, BusinessSemantics, load_business
-from src.query.catalog import PROJECT_ROOT, CatalogError, Resolved, load_yaml, resolve
-from src.query.executor import ExecuteError, execute
-from src.query.llm import LlmError, SqlReplyError, complete, generate_sql
-from src.query.lookup import make_lookup
-from src.query.matcher import MatchError, match_plan
-from src.query.plan import CannotAnswer, PlanError, parse_reply
-from src.query.prompt import PromptError, build_prompt
-from src.query.sql_builder import BuildError, build_sql
-from src.query.sql_prompt import build_sql_prompt
-from src.query.validator import validate
-
-STAGE_NAMES = (
-    "submit",
-    "resolve",
-    "prompt",
-    "llm",
-    "plan",
-    "match",
-    "sql_prompt",
-    "sql_generate",
-    "validate",
-    "execute",
-    "respond",
+from src.query.analysis import Analysis, AnalysisError, parse_analysis
+from src.query.catalog import Catalog, load_catalog
+from src.query.config import (
+    ConfigError,
+    DatabaseEntry,
+    Registry,
+    load_registry,
+    select_database,
 )
-LOGGER = logging.getLogger("multidb.query")
+from src.query.executor import ExecutionError, ExecutionResult, execute_read_only
+from src.query.llm import LlmClient, LlmError, make_client
+from src.query.observability import (
+    Response,
+    StageResult,
+    bounded_detail,
+    log_stage,
+    skipped_after,
+)
+from src.query.prompts import (
+    build_planner_prompt,
+    build_repair_prompt,
+    build_sql_prompt,
+    build_sql_repair_prompt,
+)
+from src.query.retrieval import (
+    ContextTooLargeError,
+    RetrievedContext,
+    enforce_budget,
+    retrieve,
+)
+from src.query.sql_ast import AstSummary, SqlAstError, validate_sql_ast
+from src.query.sql_checks import check_sql_names_and_values, rewrite_column_names
+from src.query.sql_generator import build_sql_generator, generate_sql
+from src.query.sql_limits import check_sql_limits
+from src.query.sql_parser import GeneratedSql, SqlParseError, parse_generated_sql
+
+RESPONSE_STATUS_BY_CATEGORY = {
+    "clarification_needed": "needs_clarification",
+    "unsupported": "cannot_answer",
+    "invalid_plan": "rejected",
+    "invalid_sql": "rejected",
+    "unsafe_sql": "rejected",
+    "invalid_request": "error",
+    "unknown_database": "error",
+    "metadata_error": "error",
+    "llm_error": "error",
+    "execution_error": "error",
+    "internal_error": "error",
+}
 
 
-@dataclass(frozen=True)
-class Credentials:
-    access_key_id: str = field(repr=False)
-    secret_access_key: str = field(repr=False)
-    session_token: str | None = field(default=None, repr=False)
+class _StageFailure(Exception):
+    def __init__(self, category: str, reason: str, output: dict[str, Any] | None = None) -> None:
+        super().__init__(reason)
+        self.category = category
+        self.reason = reason
+        self.output = output or {}
 
 
-@dataclass(frozen=True)
-class Request:
-    database: str
+def _fail(category: str, reason: str, output: dict[str, Any] | None = None) -> _StageFailure:
+    return _StageFailure(category, reason, output)
+
+
+def _described(exc: Exception) -> str:
+    """Path and reason from the validators. Messages carry field paths, not row data."""
+    return f"{exc.path}: {exc.reason}"  # type: ignore[attr-defined]
+
+
+PREVIEW_ROWS = 50
+PREVIEW_CELL_CHARS = 200
+
+
+def _preview_rows(rows: list[list[Any]]) -> list[list[Any]]:
+    """First rows for the UI, with long cell text cut short."""
+    preview = []
+    for row in rows[:PREVIEW_ROWS]:
+        preview.append(
+            [cell[:PREVIEW_CELL_CHARS] if isinstance(cell, str) else cell for cell in row]
+        )
+    return preview
+
+
+@dataclass
+class _Context:
     question: str
-    credentials: Credentials | None = field(default=None, repr=False)
-    # on_chunk streams the planner reply. on_sql_chunk streams the SQL-generator reply.
-    on_chunk: Callable[[str], None] | None = field(default=None, repr=False, compare=False)
-    on_sql_chunk: Callable[[str], None] | None = field(default=None, repr=False, compare=False)
+    database_key: str
+    registry: Registry | None
+    planner: LlmClient | None
+    sql_generator: LlmClient | None
+    entry: DatabaseEntry | None = None
+    catalog: Catalog | None = None
+    retrieved: RetrievedContext | None = None
+    planner_prompt: str = ""
+    planner_text: str = ""
+    analysis: Analysis | None = None
+    sql_prompt: str = ""
+    generator_text: str = ""
+    generated: GeneratedSql | None = None
+    summary: AstSummary | None = None
+    execution: ExecutionResult | None = None
+    # Per-stage UI detail. _run_stage clears it before each step and copies it into the StageResult.
+    detail: dict[str, Any] = field(default_factory=dict)
 
 
-STAGE_STATUSES = ("ok", "failed", "skipped")
-RESPONSE_STATUSES = ("ok", "rejected", "cannot_answer", "error")
+def _submit(ctx: _Context) -> dict[str, Any]:
+    question = ctx.question.strip() if isinstance(ctx.question, str) else ""
+    if not question:
+        raise _fail("invalid_request", "The question is empty.")
+    if not isinstance(ctx.database_key, str) or not ctx.database_key.strip():
+        raise _fail("invalid_request", "No database was selected.")
+    ctx.question = question
+    ctx.detail["question"] = question
+    return {"question_characters": len(question)}
 
 
-@dataclass(frozen=True)
-class StageResult:
-    stage: str
-    status: str  # one of STAGE_STATUSES
-    output: dict[str, Any] = field(default_factory=dict)
-    reason: str | None = None
-    duration_ms: int = 0
-
-    def __post_init__(self) -> None:
-        if self.status not in STAGE_STATUSES:
-            raise ValueError(f"unknown stage status: {self.status}")
-
-
-@dataclass(frozen=True)
-class Response:
-    status: str  # one of RESPONSE_STATUSES
-    trace: tuple[StageResult, ...]
-    result: Any = None
-    reasons: tuple[str, ...] = ()
-
-    def __post_init__(self) -> None:
-        if self.status not in RESPONSE_STATUSES:
-            raise ValueError(f"unknown response status: {self.status}")
-
-
-StageFn = Callable[[Request, list[StageResult]], StageResult]
-
-
-def _ok(stage: str, output: dict[str, Any]) -> StageResult:
-    return StageResult(stage=stage, status="ok", output=output)
-
-
-def _failed(stage: str, reason: str) -> StageResult:
-    return StageResult(stage=stage, status="failed", reason=reason)
-
-
-def database_names() -> list[str]:
-    return list(load_yaml(PROJECT_ROOT / "config.yaml")["databases"])
-
-
-def stage_submit(request: Request, trace: list[StageResult]) -> StageResult:
-    return _ok(
-        "submit",
-        {
-            "database": request.database,
-            "question": request.question,
-            "credentials_supplied": request.credentials is not None,
-        },
-    )
-
-
-def stage_resolve(request: Request, trace: list[StageResult]) -> StageResult:
-    try:
-        resolved = resolve(request.database)
-    except CatalogError as error:
-        return _failed("resolve", str(error))
-    return _ok(
-        "resolve",
-        {
-            "database": resolved.database,
-            "registry_entry": resolved.registry_entry,
-            "physical_file": resolved.physical_file,
-            "semantic_file": resolved.semantic_file,
-            "db_file": resolved.db_file,
-            "tables": resolved.table_count,
-            "columns": resolved.column_count,
-        },
-    )
-
-
-def _capabilities() -> dict[str, bool]:
-    return {key: bool(value) for key, value in load_yaml(PROJECT_ROOT / "config.yaml")["capabilities"].items()}
-
-
-def _business(resolved: Resolved) -> BusinessSemantics:
-    return load_business(resolved, PROJECT_ROOT)
-
-
-def stage_prompt(request: Request, trace: list[StageResult]) -> StageResult:
-    try:
-        resolved = resolve(request.database)
-        business = _business(resolved)
-    except (CatalogError, BusinessError) as error:
-        return _failed("prompt", str(error))
-    retrieval = _retrieval_config()
-    limit = int(retrieval["max_prompt_chars"])
-    try:
-        prompt = build_prompt(
-            request.question,
-            resolved,
-            limit,
-            int(retrieval["value_list_threshold"]),
-            business_definitions=business.prompt_text(),
-        )
-    except PromptError as error:
-        return StageResult(stage="prompt", status="failed", reason=error.reason, output={"chars": error.chars, "limit": error.limit})
-    return _ok("prompt", {"prompt": prompt, "chars": len(prompt), "limit": limit})
-
-
-def stage_llm(request: Request, trace: list[StageResult]) -> StageResult:
-    prompt = next(r.output["prompt"] for r in trace if r.stage == "prompt")
-    settings = load_yaml(PROJECT_ROOT / "config.yaml")["planner_llm"]
-    creds = request.credentials
-    try:
-        raw_reply = complete(
-            prompt,
-            model_id=settings["model_id"],
-            region=settings["region"],
-            temperature=float(settings["temperature"]),
-            max_output_tokens=int(settings["max_output_tokens"]),
-            access_key_id=creds.access_key_id if creds else None,
-            secret_access_key=creds.secret_access_key if creds else None,
-            session_token=creds.session_token if creds else None,
-            on_chunk=request.on_chunk,
-        )
-    except LlmError as error:
-        return _failed("llm", str(error))
-    return _ok("llm", {"raw_reply": raw_reply, "model_id": settings["model_id"], "region": settings["region"]})
-
-
-def stage_plan(request: Request, trace: list[StageResult]) -> StageResult:
-    raw_reply = next(r.output["raw_reply"] for r in trace if r.stage == "llm")
-    try:
-        plan = parse_reply(raw_reply)
-    except CannotAnswer as answer:
-        return StageResult(
-            stage="plan", status="failed", reason=answer.reason, output={"cannot_answer": True, "reason": answer.reason}
-        )
-    except PlanError as error:
-        return StageResult(stage="plan", status="failed", reason="; ".join(error.reasons), output={"reasons": list(error.reasons)})
-    return _ok("plan", {"plan": plan})
-
-
-def stage_match(request: Request, trace: list[StageResult]) -> StageResult:
-    plan = next(r.output["plan"] for r in trace if r.stage == "plan")
-    try:
-        resolved = resolve(request.database)
-        business = _business(resolved)
-    except (CatalogError, BusinessError) as error:
-        return _failed("match", str(error))
-    try:
-        matched = match_plan(plan, resolved, lookup=make_lookup(resolved), business=business, capabilities=_capabilities())
-    except MatchError as error:
-        return StageResult(stage="match", status="failed", reason="; ".join(error.reasons), output={"reasons": list(error.reasons)})
-    return _ok("match", {"matched_plan": matched})
-
-
-def stage_sql_prompt(request: Request, trace: list[StageResult]) -> StageResult:
-    matched = next(r.output["matched_plan"] for r in trace if r.stage == "match")
-    try:
-        resolved = resolve(request.database)
-        business = _business(resolved)
-    except (CatalogError, BusinessError) as error:
-        return _failed("sql_prompt", str(error))
-    limit = int(_retrieval_config()["max_prompt_chars"])
-    try:
-        prompt = build_sql_prompt(
-            request.question,
-            matched,
-            resolved,
-            limit,
-            _default_row_limit(),
-            business_definitions=business.prompt_text(),
-        )
-    except PromptError as error:
-        return StageResult(stage="sql_prompt", status="failed", reason=error.reason, output={"chars": error.chars, "limit": error.limit})
-    return _ok("sql_prompt", {"prompt": prompt, "chars": len(prompt), "limit": limit})
-
-
-def stage_sql_generate(request: Request, trace: list[StageResult]) -> StageResult:
-    """The builder path runs when simple_sql_builder is on, and always for a repeat-purchase plan, which has only a fixed SQL form. Plans the builder returns None for go to the SQL-generator LLM."""
-    matched = next(r.output["matched_plan"] for r in trace if r.stage == "match")
-    prompt = next(r.output["prompt"] for r in trace if r.stage == "sql_prompt")
-    try:
-        resolved = resolve(request.database)
-    except CatalogError as error:
-        return _failed("sql_generate", str(error))
-    if _capabilities().get("simple_sql_builder") or matched.get("repeat_purchase"):
+def _resolve_database(ctx: _Context) -> dict[str, Any]:
+    if ctx.registry is None:
         try:
-            built = build_sql(matched, resolved.physical["schema"], Path(resolved.db_file).stem, _default_row_limit())
-        except BuildError as error:
-            return _failed("sql_generate", str(error))
-        if built is not None:
-            return _ok("sql_generate", {"path": "builder", "sql": built["sql"], "params": built["params"]})
-    settings = load_yaml(PROJECT_ROOT / "config.yaml")["sql_generator_llm"]
-    creds = request.credentials
+            ctx.registry = load_registry()
+        except ConfigError as exc:
+            raise _fail("metadata_error", str(exc)) from exc
     try:
-        reply = generate_sql(
-            prompt,
-            model_id=settings["model_id"],
-            region=settings["region"],
-            temperature=float(settings["temperature"]),
-            max_output_tokens=int(settings["max_output_tokens"]),
-            access_key_id=creds.access_key_id if creds else None,
-            secret_access_key=creds.secret_access_key if creds else None,
-            session_token=creds.session_token if creds else None,
-            on_chunk=request.on_sql_chunk,
-        )
-    except LlmError as error:
-        return _failed("sql_generate", str(error))
-    except SqlReplyError as error:
-        return StageResult(
-            stage="sql_generate",
-            status="failed",
-            reason="; ".join(error.reasons),
-            output={"path": "llm", "raw_reply": error.raw, "reasons": list(error.reasons)},
-        )
-    return _ok(
-        "sql_generate",
-        {
-            "path": "llm",
-            "raw_reply": reply.raw,
-            "sql": reply.sql,
-            "params": reply.params,
-            "model_id": settings["model_id"],
-            "region": settings["region"],
-        },
+        ctx.entry = select_database(ctx.registry, ctx.database_key.strip())
+    except ConfigError as exc:
+        category = "unknown_database" if type(exc).__name__ == "UnknownDatabaseError" else "metadata_error"
+        raise _fail(category, str(exc)) from exc
+    ctx.detail["database"] = ctx.entry.key
+    ctx.detail["database_file"] = Path(str(ctx.entry.database_file)).name
+    return {"database": ctx.entry.key}
+
+
+def _load_catalog(ctx: _Context) -> dict[str, Any]:
+    try:
+        ctx.catalog = load_catalog(ctx.registry, ctx.entry.key)
+    except ConfigError as exc:
+        raise _fail("metadata_error", str(exc)) from exc
+    ctx.detail["tables"] = sorted(ctx.catalog.tables)
+    ctx.detail["metrics"] = [metric.name for metric in ctx.catalog.metrics]
+    return {"tables": len(ctx.catalog.tables), "metrics": len(ctx.catalog.metrics)}
+
+
+def _retrieve_context(ctx: _Context) -> dict[str, Any]:
+    ctx.retrieved = retrieve(
+        ctx.catalog,
+        ctx.question,
+        value_list_threshold=ctx.registry.retrieval.value_list_threshold,
+    )
+    try:
+        enforce_budget(ctx.retrieved, ctx.registry.retrieval.max_prompt_chars)
+    except ContextTooLargeError as exc:
+        raise _fail("unsupported", str(exc)) from exc
+    ctx.detail["retrieved_context"] = ctx.retrieved.to_prompt_text()
+    return {"characters": len(ctx.retrieved.to_prompt_text())}
+
+
+def _build_planner_prompt(ctx: _Context) -> dict[str, Any]:
+    prompt = build_planner_prompt(
+        ctx.question, ctx.retrieved, ctx.catalog.metrics, full_schema=ctx.catalog.full_schema
+    )
+    ctx.planner_prompt = prompt
+    ctx.detail["planner_prompt"] = prompt
+    limit = ctx.registry.retrieval.max_prompt_chars
+    if len(prompt) > limit:
+        raise _fail("unsupported", f"The planner prompt is {len(prompt)} characters, over the {limit} limit.")
+    return {"characters": len(prompt)}
+
+
+def _planner_reply(ctx: _Context, prompt: str) -> str:
+    try:
+        client = ctx.planner if ctx.planner is not None else make_client(ctx.registry.planner_llm)
+        return client.complete(prompt)
+    except LlmError as exc:
+        raise _fail("llm_error", str(exc) or "The planner call failed.") from exc
+
+
+def _envelope_rejection(text: str) -> str | None:
+    """Return the reason when a planner reply does not match the envelope, so one repair call can fix it."""
+    try:
+        parse_analysis(text)
+    except AnalysisError as exc:
+        return _described(exc)
+    return None
+
+
+def _planner_llm(ctx: _Context) -> dict[str, Any]:
+    text = _planner_reply(ctx, ctx.planner_prompt)
+    attempts = 1
+    reason = _envelope_rejection(text)
+    if reason is not None:
+        ctx.detail["first_reply"] = text
+        ctx.detail["repair_reason"] = reason
+        repair_prompt = build_repair_prompt(ctx.planner_prompt, text, reason)
+        if len(repair_prompt) <= ctx.registry.retrieval.max_prompt_chars:
+            text = _planner_reply(ctx, repair_prompt)
+            attempts = 2
+    ctx.planner_text = text
+    ctx.detail["planner_reply"] = text
+    return {"characters": len(text), "attempts": attempts}
+
+
+def _parse_analysis(ctx: _Context) -> dict[str, Any]:
+    try:
+        analysis = parse_analysis(ctx.planner_text)
+    except AnalysisError as exc:
+        raise _fail("invalid_plan", _described(exc)) from exc
+    ctx.analysis = analysis
+    if analysis.status != "ready":
+        # parse_analysis requires a message for every non-ready reply.
+        category = "clarification_needed" if analysis.status == "needs_clarification" else "unsupported"
+        missing = list(analysis.clarification.missing)
+        ctx.detail["clarification"] = asdict(analysis.clarification)
+        raise _fail(category, analysis.clarification.message, {"status": analysis.status, "missing": missing})
+    ctx.detail["analysis"] = analysis.analysis
+    return {"status": analysis.status, "characters": len(analysis.analysis)}
+
+
+def _build_sql_prompt(ctx: _Context) -> dict[str, Any]:
+    ctx.sql_prompt = build_sql_prompt(
+        ctx.question,
+        ctx.analysis.analysis,
+        ctx.catalog,
+        ctx.retrieved,
+        ctx.registry.capabilities,
+    )
+    ctx.detail["sql_prompt"] = ctx.sql_prompt
+    return {"characters": len(ctx.sql_prompt)}
+
+
+def _sql_generator_llm(ctx: _Context) -> dict[str, Any]:
+    try:
+        client = ctx.sql_generator if ctx.sql_generator is not None else build_sql_generator(ctx.registry)
+    except LlmError as exc:
+        raise _fail("llm_error", str(exc) or "The SQL generator call failed.") from exc
+    text, result = generate_sql(client, ctx.sql_prompt)
+    ctx.generator_text = text
+    ctx.detail["generator_reply"] = text
+    if result.status == "failed":
+        raise _fail(result.category or "llm_error", result.reason or "The SQL generator call failed.")
+    return {"characters": len(text)}
+
+
+def _parse_generated_sql(ctx: _Context) -> dict[str, Any]:
+    attempts = 1
+    try:
+        ctx.generated = parse_generated_sql(ctx.generator_text)
+    except SqlParseError as exc:
+        reason = _described(exc)
+        ctx.detail["generator_reply"] = ctx.generator_text
+        ctx.detail["repair_reason"] = reason
+        ctx.generator_text = _generate_repaired_sql(ctx, reason, "invalid_sql")
+        attempts = 2
+        try:
+            ctx.generated = parse_generated_sql(ctx.generator_text)
+        except SqlParseError as second:
+            ctx.detail["generator_reply"] = ctx.generator_text
+            raise _fail("invalid_sql", _described(second)) from second
+    ctx.detail["generator_reply"] = ctx.generator_text
+    ctx.detail["sql"] = ctx.generated.sql
+    ctx.detail["params"] = list(ctx.generated.params)
+    return {"parameters": len(ctx.generated.params), "attempts": attempts}
+
+
+def _check_generated_sql(ctx: _Context) -> AstSummary:
+    rewritten, rewrites = rewrite_column_names(ctx.generated.sql, ctx.catalog)
+    if rewrites:
+        ctx.generated = replace(ctx.generated, sql=rewritten)
+        ctx.detail["sql"] = rewritten
+        ctx.detail["column_rewrites"] = [{"written": w, "physical": p} for w, p in rewrites]
+    generated = ctx.generated
+    summary = validate_sql_ast(
+        generated.sql,
+        ctx.catalog,
+        len(generated.params),
+        ctx.registry.capabilities,
+    )
+    check_sql_limits(
+        generated.sql,
+        summary,
+        ctx.registry.limits,
+        ctx.registry.retrieval.default_row_limit,
+    )
+    check_sql_names_and_values(generated.sql, generated.params, ctx.catalog)
+    return summary
+
+
+def _repairable_sql_rejection(exc: SqlAstError) -> bool:
+    """One repair call covers SQL the model can rewrite: an unsupported construct, an invalid
+    name or structure, a disallowed function, a LIMIT or OFFSET outside its bound, or a reply with
+    several statements. Writes and tables outside the dataset are never repaired."""
+    if exc.category in ("unsupported", "invalid_sql", "from", "joins"):
+        return True
+    return exc.category == "unsafe_sql" and (
+        "not allowed" in exc.reason or "exactly one SQL statement" in exc.reason
     )
 
 
-def _sql_of(trace: list[StageResult]) -> dict[str, Any]:
-    generated = next(r.output for r in trace if r.stage == "sql_generate")
-    return {"sql": generated["sql"], "params": generated["params"]}
-
-
-def _retrieval_config() -> dict[str, Any]:
-    return load_yaml(PROJECT_ROOT / "config.yaml")["retrieval"]
-
-
-def _default_row_limit() -> int:
-    return int(_retrieval_config()["default_row_limit"])
-
-
-def stage_validate(request: Request, trace: list[StageResult]) -> StageResult:
-    built = _sql_of(trace)
-    matched = next(r.output["matched_plan"] for r in trace if r.stage == "match")
+def _validate_sql(ctx: _Context) -> dict[str, Any]:
+    ctx.detail["sql"] = ctx.generated.sql
+    attempts = 1
     try:
-        resolved = resolve(request.database)
-    except CatalogError as error:
-        return _failed("validate", str(error))
-    verdict = validate(built, resolved, make_lookup(resolved), _default_row_limit(), matched=matched)
-    if not verdict["valid"]:
-        return StageResult(stage="validate", status="failed", reason="; ".join(verdict["reasons"]), output=verdict)
-    return _ok("validate", verdict)
-
-
-def _is_single_value(matched: dict[str, Any]) -> bool:
-    return bool(matched.get("metrics")) and not matched.get("dimensions")
-
-
-def stage_execute(request: Request, trace: list[StageResult]) -> StageResult:
-    built = _sql_of(trace)
-    aggregate = _is_single_value(next(r.output["matched_plan"] for r in trace if r.stage == "match"))
-    try:
-        resolved = resolve(request.database)
-        result = execute(built, resolved.db_file, _default_row_limit(), aggregate)
-    except CatalogError as error:
-        return _failed("execute", str(error))
-    except ExecuteError as error:
-        return _failed("execute", error.message)
-    return _ok("execute", result)
-
-
-def stage_respond(request: Request, trace: list[StageResult]) -> StageResult:
-    generated = _sql_of(trace)
-    executed = next(r.output for r in trace if r.stage == "execute")
-    summary = {
-        "status": "ok",
-        "sql": generated["sql"],
-        "params": generated["params"],
-        "row_count": executed["row_count"],
-        "truncated": executed["truncated"],
+        summary = _check_generated_sql(ctx)
+    except SqlAstError as exc:
+        if not _repairable_sql_rejection(exc):
+            raise _fail(exc.category, _described(exc)) from exc
+        summary = _repair_generated_sql(ctx, _described(exc), exc.category)
+        attempts = 2
+    ctx.summary = summary
+    ctx.detail["ast_summary"] = asdict(summary)
+    ctx.detail["sql_attempts"] = attempts
+    return {
+        "tables": list(summary.tables),
+        "features": list(summary.features),
+        "joins": summary.join_count,
+        "attempts": attempts,
     }
-    return _ok("respond", summary)
 
 
-STAGES: tuple[tuple[str, StageFn], ...] = (
-    ("submit", stage_submit),
-    ("resolve", stage_resolve),
-    ("prompt", stage_prompt),
-    ("llm", stage_llm),
-    ("plan", stage_plan),
-    ("match", stage_match),
-    ("sql_prompt", stage_sql_prompt),
-    ("sql_generate", stage_sql_generate),
-    ("validate", stage_validate),
-    ("execute", stage_execute),
-    ("respond", stage_respond),
+def _generate_repaired_sql(ctx: _Context, reason: str, category: str) -> str:
+    """Send one SQL repair call for a rejected reply and return the new reply text."""
+    repair_prompt = build_sql_repair_prompt(ctx.sql_prompt, ctx.generator_text, reason)
+    if len(repair_prompt) > ctx.registry.retrieval.max_prompt_chars:
+        raise _fail(category, reason)
+    client = ctx.sql_generator if ctx.sql_generator is not None else build_sql_generator(ctx.registry)
+    text, result = generate_sql(client, repair_prompt)
+    if result.status == "failed":
+        raise _fail(result.category or "llm_error", result.reason or "The SQL generator call failed.")
+    return text
+
+
+def _repair_generated_sql(ctx: _Context, reason: str, category: str) -> AstSummary:
+    """Send one repair call for rewritable SQL, then validate the new reply once."""
+    ctx.detail["first_sql"] = ctx.generated.sql
+    ctx.detail["repair_reason"] = reason
+    text = _generate_repaired_sql(ctx, reason, category)
+    try:
+        generated = parse_generated_sql(text)
+    except SqlParseError as exc:
+        ctx.detail["generator_reply"] = text
+        raise _fail("invalid_sql", _described(exc)) from exc
+    ctx.generator_text = text
+    ctx.generated = generated
+    ctx.detail["generator_reply"] = text
+    ctx.detail["sql"] = generated.sql
+    ctx.detail["params"] = list(generated.params)
+    try:
+        return _check_generated_sql(ctx)
+    except SqlAstError as exc:
+        raise _fail(exc.category, _described(exc)) from exc
+
+
+def _run_generated_sql(ctx: _Context) -> ExecutionResult:
+    generated = ctx.generated
+    return execute_read_only(
+        ctx.entry.database_file,
+        generated.sql,
+        generated.params,
+        max_rows=ctx.registry.retrieval.default_row_limit,
+        timeout_seconds=ctx.registry.limits.query_timeout_seconds,
+        schema=ctx.catalog.schema,
+    )
+
+
+def _execute(ctx: _Context) -> dict[str, Any]:
+    try:
+        ctx.execution = _run_generated_sql(ctx)
+    except ExecutionError as exc:
+        # A runtime error with a database message gets one repair; the message is sent to the model
+        # but never shown to the user. Timeouts and other failures without a message are not repaired.
+        if not exc.diagnostic or ctx.detail.get("sql_attempts", 1) > 1:
+            raise _fail("execution_error", exc.reason) from exc
+        ctx.detail["execution_diagnostic"] = exc.diagnostic
+        ctx.summary = _repair_generated_sql(ctx, f"{exc.reason}: {exc.diagnostic}", "execution_error")
+        ctx.detail["ast_summary"] = asdict(ctx.summary)
+        ctx.detail["sql_attempts"] = 2
+        try:
+            ctx.execution = _run_generated_sql(ctx)
+        except ExecutionError as second:
+            raise _fail("execution_error", second.reason) from second
+    ctx.detail["columns"] = list(ctx.execution.columns)
+    ctx.detail["preview_rows"] = _preview_rows(ctx.execution.rows)
+    ctx.detail["preview_row_limit"] = PREVIEW_ROWS
+    return {
+        "row_count": ctx.execution.row_count,
+        "truncated": ctx.execution.truncated,
+        "columns": len(ctx.execution.columns),
+    }
+
+
+def _format_response(ctx: _Context) -> dict[str, Any]:
+    return {"row_count": ctx.execution.row_count}
+
+
+_STEPS: tuple[tuple[str, Callable[[_Context], dict[str, Any]]], ...] = (
+    ("submit", _submit),
+    ("resolve_database", _resolve_database),
+    ("load_catalog", _load_catalog),
+    ("retrieve_context", _retrieve_context),
+    ("build_planner_prompt", _build_planner_prompt),
+    ("planner_llm", _planner_llm),
+    ("parse_analysis", _parse_analysis),
+    ("build_sql_prompt", _build_sql_prompt),
+    ("sql_generator_llm", _sql_generator_llm),
+    ("parse_generated_sql", _parse_generated_sql),
+    ("validate_sql", _validate_sql),
+    ("execute", _execute),
+    ("format_response", _format_response),
 )
 
-
-def run(request: Request, on_stage_done: Callable[[StageResult], None]) -> list[StageResult]:
-    """Run the stages in order. The first failure marks every later stage as skipped. Each stage is logged and reported once, in order."""
-    _attach_log_file()
-    trace: list[StageResult] = []
-    stopped = False
-    for name, stage_fn in STAGES:
-        if stopped:
-            result = StageResult(stage=name, status="skipped")
-        else:
-            started = time.perf_counter()
-            result = _run_stage(name, stage_fn, request, trace)
-            result = replace(result, duration_ms=round((time.perf_counter() - started) * 1000))
-            stopped = result.status == "failed"
-        trace.append(result)
-        LOGGER.info(_log_line(result))
-        on_stage_done(result)
-    return trace
+STAGES: tuple[str, ...] = tuple(name for name, _ in _STEPS)
 
 
-def _run_stage(name: str, stage_fn: StageFn, request: Request, trace: list[StageResult]) -> StageResult:
+def _elapsed_ms(started: float) -> float:
+    return (time.monotonic() - started) * 1000
+
+
+def _run_stage(name: str, step: Callable[[_Context], dict[str, Any]], ctx: _Context) -> StageResult:
+    started = time.monotonic()
+    ctx.detail.clear()
     try:
-        return stage_fn(request, trace)
-    except Exception as error:
-        LOGGER.error("stage %s raised %s", name, type(error).__name__, exc_info=True)
-        return _failed(name, f"Unexpected error in {name} ({type(error).__name__}).")
-
-
-def _log_line(result: StageResult) -> str:
-    """One JSON line per stage. Prompt text, model replies and result rows are left out: the log keeps sizes and counts."""
-    output = dict(result.output)
-    if result.stage in ("prompt", "sql_prompt"):
-        output.pop("prompt", None)
-    if result.stage in ("llm", "sql_generate"):
-        output.pop("raw_reply", None)
-    if result.stage == "execute":
-        output.pop("rows", None)
-    return json.dumps(
-        {"stage": result.stage, "status": result.status, "duration_ms": result.duration_ms, "reason": result.reason, "output": output},
-        default=str,
+        output = step(ctx)
+    except _StageFailure as exc:
+        return StageResult(
+            stage=name,
+            status="failed",
+            output=exc.output,
+            reason=exc.reason,
+            duration_ms=_elapsed_ms(started),
+            category=exc.category,
+            detail=bounded_detail(ctx.detail),
+        )
+    except Exception as exc:  # noqa: BLE001 - unexpected: keep the message out of the trace
+        return StageResult(
+            stage=name,
+            status="failed",
+            reason=f"Unexpected internal error ({type(exc).__name__}).",
+            duration_ms=_elapsed_ms(started),
+            category="internal_error",
+            detail=bounded_detail(ctx.detail),
+        )
+    return StageResult(
+        stage=name,
+        status="ok",
+        output=output,
+        duration_ms=_elapsed_ms(started),
+        detail=bounded_detail(ctx.detail),
     )
 
 
-def _attach_log_file() -> None:
-    path = PROJECT_ROOT / load_yaml(PROJECT_ROOT / "config.yaml")["logging"]["file"]
-    if any(getattr(handler, "baseFilename", None) == str(path) for handler in LOGGER.handlers):
-        return
-    path.parent.mkdir(parents=True, exist_ok=True)
-    handler = logging.FileHandler(path, encoding="utf-8")
-    handler.setFormatter(logging.Formatter("%(asctime)s %(message)s"))
-    LOGGER.addHandler(handler)
-    LOGGER.setLevel(logging.INFO)
+def _failure_response(ctx: _Context, trace: list[StageResult], failed: StageResult) -> Response:
+    generated = ctx.generated
+    return Response(
+        status=RESPONSE_STATUS_BY_CATEGORY[failed.category],
+        trace=tuple(trace),
+        sql=generated.sql if generated else None,
+        params=tuple(generated.params) if generated else (),
+        reasons=(failed.reason,) if failed.reason else (),
+        category=failed.category,
+    )
 
 
-REJECTED_STAGES = ("plan", "match", "validate")
+def _success_response(ctx: _Context, trace: list[StageResult]) -> Response:
+    execution = ctx.execution
+    return Response(
+        status="ok",
+        trace=tuple(trace),
+        result={
+            "columns": list(execution.columns),
+            "rows": execution.rows,
+            "row_count": execution.row_count,
+            "truncated": execution.truncated,
+        },
+        sql=ctx.generated.sql,
+        params=tuple(ctx.generated.params),
+    )
 
 
-def final_status(trace: list[StageResult]) -> str:
-    failed = next((result for result in trace if result.status == "failed"), None)
-    if failed is None:
-        return "ok"
-    if failed.stage == "plan" and failed.output.get("cannot_answer"):
-        return "cannot_answer"
-    if failed.stage in REJECTED_STAGES:
-        return "rejected"
-    return "error"
+def run_pipeline(
+    question: str,
+    database_key: str,
+    *,
+    registry: Registry | None = None,
+    planner: LlmClient | None = None,
+    sql_generator: LlmClient | None = None,
+    request_id: str | None = None,
+    on_stage: Callable[[StageResult], None] | None = None,
+) -> Response:
+    """Answer one question against one registered database. Never raises for expected failures.
 
+    ``on_stage`` receives each StageResult as soon as it is final, including skipped stages.
+    """
+    ctx = _Context(
+        question=question,
+        database_key=database_key,
+        registry=registry,
+        planner=planner,
+        sql_generator=sql_generator,
+    )
+    trace: list[StageResult] = []
 
-def make_response(trace: list[StageResult], result: Any = None, reasons: tuple[str, ...] = ()) -> Response:
-    return Response(status=final_status(trace), trace=tuple(trace), result=result, reasons=reasons)
+    def emit(result: StageResult) -> None:
+        trace.append(result)
+        log_stage(result, request_id)
+        if on_stage is not None:
+            on_stage(result)
+
+    for name, step in _STEPS:
+        result = _run_stage(name, step, ctx)
+        emit(result)
+        if result.status == "failed":
+            for skipped in skipped_after(list(STAGES), name):
+                emit(skipped)
+            return _failure_response(ctx, trace, result)
+    return _success_response(ctx, trace)

@@ -131,6 +131,47 @@ class ExcelToDuckDBTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(self.query("stock", "SELECT qty FROM stock.stock.Items"), [(9,)])
 
+    def test_reprocessing_drops_sheets_removed_from_workbook(self):
+        self.write_xlsx(
+            "stock.xlsx",
+            {"Items": pd.DataFrame({"qty": [1]}), "Old": pd.DataFrame({"x": [1]})},
+        )
+        self.run_app()
+
+        self.write_xlsx("stock.xlsx", {"Items": pd.DataFrame({"qty": [2]})})
+        code, _ = self.run_app()
+
+        self.assertEqual(code, 0)
+        self.assertEqual(self.tables("stock", "stock"), {"Items"})
+
+    def test_reprocessing_yields_identical_schema_and_row_counts(self):
+        self.write_xlsx(
+            "repeat.xlsx",
+            {
+                "Orders": pd.DataFrame({"Order ID": [1, 2, 2], "Amount": [10.5, None, 3.0]}),
+                "People": pd.DataFrame({"Name": ["Ann", "Ben"]}),
+            },
+        )
+
+        def fingerprint():
+            columns = self.query(
+                "repeat",
+                "SELECT table_name, column_name, data_type, ordinal_position "
+                "FROM information_schema.columns WHERE table_schema = 'repeat' ORDER BY 1, 4",
+            )
+            counts = [
+                self.query("repeat", f'SELECT count(*) FROM repeat.repeat."{table}"')[0][0]
+                for table in sorted({row[0] for row in columns})
+            ]
+            return columns, counts
+
+        self.run_app()
+        first = fingerprint()
+        self.run_app()
+
+        self.assertEqual(fingerprint(), first)
+        self.assertEqual(first[1], [3, 2])
+
     def test_invalid_workbook_does_not_stop_valid_workbook(self):
         (self.input_dir / "broken.xlsx").write_text("not an excel file", encoding="utf-8")
         self.write_xlsx("good.xlsx", {"Data": pd.DataFrame({"v": [42]})})

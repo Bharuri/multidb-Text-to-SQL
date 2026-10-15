@@ -1,0 +1,254 @@
+Calculate total sales across the entire dataset.
+
+
+
+Calculate total profit across all orders.
+
+
+
+Retrieve all orders placed in the West region.
+
+
+
+Find all records where profit is greater than zero.
+
+
+
+Find all orders where the discount is greater than zero.
+
+
+
+Retrieve all products belonging to the Furniture category.
+
+
+
+Find all orders shipped using First Class shipping.
+
+
+
+Find orders where quantity is at least 5. Return order ID, product name, quantity, and sales.
+
+
+
+Find all products that generated a loss.
+
+
+
+Retrieve all orders placed between January 1, 2017, and December 31, 2017.
+
+
+
+Return the 10 product records with the highest sales, ordered from highest to lowest.
+
+
+
+Calculate total sales for each product category and sort the results from highest to lowest.
+
+
+
+Calculate total profit for each region.
+
+
+
+Count distinct order IDs in each region.
+
+
+
+Calculate the average discount for each category.
+
+
+
+Calculate total sales and total profit for each customer segment.
+
+
+
+Count distinct product names in each sub-category.
+
+
+
+Find the five states with the highest total sales.
+
+
+
+Find cities with total sales greater than 10,000. Display the city, state, and total sales.
+
+
+
+Calculate annual sales and profit for each year represented in the dataset.
+
+
+
+For each category, calculate total sales, total profit, and the number of records with negative profit.
+
+
+
+Calculate profit margin for each category using total profit divided by total sales, multiplied by 100.
+
+
+
+Calculate each region's percentage contribution to total company sales.
+
+
+
+Calculate total profit by sub-category and return the three most profitable and three least profitable sub-categories.
+
+
+
+Group records into discount bands: no discount, low discount (greater than 0 and up to 20%), medium discount (greater than 20% and up to 50%), and high discount (greater than 50%). Calculate sales and profit for each band.
+
+
+
+Use a CASE expression to classify records as High Sales when sales are at least 500, Medium Sales when sales are at least 100 but below 500, and Low Sales otherwise. Count records in each class.
+
+
+
+Find order records whose sales exceed the average sales across all records.
+
+
+
+Find customers whose total sales exceed 5,000. Return customer ID, customer name, and total sales.
+
+
+
+Find sub-categories with positive total sales and negative total profit. Sort by total loss from greatest to smallest.
+
+
+
+Calculate total sales for each month, ordered chronologically.
+
+
+
+Calculate sales for each calendar quarter and region.
+
+
+
+Calculate the number of days between order date and ship date for each record. Report average shipping duration by ship mode.
+
+
+
+Find orders whose shipping duration exceeds the overall average duration. Return order ID, order date, ship date, and shipping duration.
+
+
+
+Find customers who placed orders in at least two distinct calendar years.
+
+
+
+Find each customer's earliest order date and the number of distinct orders they placed.
+
+
+
+Find records where sales exceed the average sales for the corresponding product category.
+
+
+
+Calculate total sales by product and identify products whose total sales exceed the average product-level sales within their sub-category.
+
+
+
+Find customers whose records contain no negative-profit entries.
+
+
+
+Calculate annual sales and compare each year with the previous year, including the absolute and percentage change.
+
+
+
+Calculate monthly sales, previous month's sales, and the percentage change using LAG().
+
+
+
+Calculate total profit for each region and rank regions from highest to lowest profit using RANK().
+
+
+
+Calculate total sales by customer and rank customers within their respective segments.
+
+
+
+Calculate monthly sales and the cumulative sales total across months using a window function.
+
+
+
+Calculate sales for each category and region, then calculate each region's percentage of sales within that category using a window function.
+
+
+
+Calculate annual sales by category and identify category-year combinations above the company's average annual category sales.
+
+
+
+For each customer, order their distinct orders by order date and use LAG() to calculate the number of days between consecutive orders.
+
+
+
+Calculate profit by region and sub-category, then identify sub-categories whose profit is below the average sub-category profit for their region.
+
+
+
+Calculate total sales by product and return the three highest-selling products within each category using ROW_NUMBER() or RANK().
+
+
+
+Rank products by sales within each category and calculate cumulative sales contribution as a percentage of category sales. Identify products contributing to the first 80% of sales.
+
+
+
+Find customers who placed orders in at least two distinct calendar years, calculate their first and second order dates, and determine the number of days between those orders, along with the count of customers who never placed a second order.
+
+
+
+51. For each region, find the sub-category with the highest total sales, including ties.
+52. Find customers whose total profit is negative even though their total sales exceed 2,000.
+53. Calculate the average order value for each customer segment, counting each distinct order only once.
+54. Find products whose total sales are greater than the average total sales per product across the entire dataset.
+55. For each category, calculate the percentage of total sales generated by each sub-category.
+56. Identify states where total sales increased every year across all consecutive years available in the dataset.
+57. Calculate the monthly sales growth rate for each region and identify the month with the largest positive growth in each region.
+58. Find customers whose average order value is greater than the overall average order value.
+59. For each ship mode, calculate the percentage of orders shipped within one day, two days, and more than two days after the order date.
+60. Find products that generated positive profit in some regions but negative profit in others.
+61. Calculate total sales, total profit, and profit margin by state, then rank states within each region by profit margin.
+62. Identify orders containing products from at least three distinct sub-categories. Return the order ID, customer, distinct sub-category count, and total sales.
+63. Find customers who purchased products from every product category available in the dataset.
+64. Calculate each customer's share of total sales within their own segment and identify customers contributing at least 5% of their segment's sales.
+65. Find sub-categories whose average discount is above the overall average discount and whose total profit is negative.
+Advanced aggregations and subqueries (66–75)
+66. For each category, identify products whose total sales exceed the category's average product-level sales by at least 50%.
+67. Find the top 10 customers by total profit, excluding customers with fewer than three distinct orders.
+68. Calculate the percentage of orders that generated negative profit for each region, using distinct orders rather than individual product records as the denominator.
+69. Identify customers whose first order was unprofitable but whose subsequent orders generated positive total profit.
+70. Find products that contributed to at least 10% of their sub-category's total profit, considering only sub-categories with positive total profit.
+71. For each state, calculate its highest-sales month and compare that month's sales with the state's average monthly sales.
+72. Identify regions where every product category has positive total profit.
+73. Find customers whose total sales are above the 90th percentile of customer-level total sales.
+74. Calculate each category's contribution to total company profit, including categories that generated negative profit.
+75. Find pairs of distinct products frequently purchased together in the same order. Return the product pairs and the number of distinct orders containing both products.
+Window functions and time-series analysis (76–85)
+76. Calculate a three-month moving average of monthly sales for each region, ensuring that the calculation uses consecutive calendar months.
+77. For each product, calculate cumulative sales over time and identify the first order date on which its cumulative sales exceeded 50% of its final total sales.
+78. Rank states by annual sales within each region and return the top two states for each region and year.
+79. For each customer, calculate the time in days between consecutive distinct orders and flag intervals longer than 90 days.
+80. Identify months where sales were higher than both the previous month and the following month, for each region.
+81. Calculate year-over-year profit growth by sub-category and rank sub-categories by growth within each year.
+82. For each region, identify the first month in which cumulative sales exceeded 25%, 50%, and 75% of that region's annual sales for each year.
+83. Calculate each customer's running total of order-level sales and identify the first order at which their cumulative sales exceeded 5,000.
+84. Find products whose sales increased for three consecutive observed calendar months, using monthly aggregated sales and window functions.
+85. Calculate the difference between each state's annual profit and its previous year's profit, then identify states with the largest absolute profit decline in each year.
+CTEs, cohorts, and multi-step analysis (86–95)
+86. Create customer cohorts based on the month of their first order. For each cohort, calculate the number of customers who made another purchase in each subsequent month.
+87. Calculate customer retention rates by first-order month, showing the percentage of the original cohort that purchased again after one, two, three, and six months.
+88. Identify customers who placed orders in at least three consecutive calendar quarters.
+89. Find customers whose sales increased in each of their first three distinct orders, using order-level totals rather than line-item sales.
+90. Calculate the median order value by region and identify orders whose value exceeds twice the regional median.
+91. Find the longest consecutive sequence of months in which each region's sales increased month over month.
+92. Identify products that were loss-making in one year but profitable in the following year, and calculate the change in profit.
+93. Calculate the percentage of customers who purchased again within 30, 60, and 90 days of their first order.
+94. Find customers whose first order was in one category and whose second distinct order included a different category. Report the first and second order dates and categories.
+95. For each region, identify the smallest set of sub-categories, ranked by sales, that collectively account for at least 80% of regional sales.
+High complexity (96–100)
+96. Customer value segmentation: Calculate each customer's total sales, total profit, distinct order count, and recency based on the latest order date in the dataset. Assign configurable RFM-style segments using documented thresholds.
+97. Profitability anomaly detection: For each category and year, identify products whose profit margin is below the category's median product-level profit margin, provided the product has at least a configurable minimum sales amount.
+98. Discount impact analysis: For each sub-category, compare average profit margin for undiscounted records against records with discounts. Report the difference and rank sub-categories by the largest margin decline. Do not interpret the comparison as causal evidence.
+99. Regional sales mix shift: For each category, calculate the percentage of regional sales contributed by each sub-category in consecutive years. Identify sub-categories with the largest absolute percentage-point change in mix.
+100. Customer purchase-cycle analysis: Aggregate sales to distinct customer orders, calculate the interval between consecutive orders, determine each customer's median purchase interval, classify customers into configurable purchase-frequency bands, and summarize sales and profit by band.

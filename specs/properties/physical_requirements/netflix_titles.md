@@ -75,38 +75,64 @@ Describe the `netflix_titles` schema in `databases/netflix_titles.duckdb`: its 5
 | `fk_netflix_titles_countries_show_id` | `netflix_titles_countries.show_id` | `netflix_titles.show_id` | many-to-one | no |
 | `fk_netflix_titles_directors_show_id` | `netflix_titles_directors.show_id` | `netflix_titles.show_id` | many-to-one | no |
 
+Parent `netflix_titles.show_id` has no duplicates among its 6,232 non-NULL values. Four source rows have NULL `show_id` and shifted values in other columns, and some bridge `show_id` values appear to belong to those rows. Those bridge rows have no parent match and are dropped by an inner join.
+
 ### `fk_netflix_titles_cast_show_id`
 
-- Status: proposed
+- Status: approved
 - Meaning: Each child row is a credit for one title in the parent table.
 - Enforceable now: no
+- Enabled for joins: yes
+- Join policy: inner
+- Normalization child: none
+- Normalization parent: cast BIGINT
+- Normalization note: the parent is DOUBLE and the child is BIGINT, so the parent key is cast to BIGINT in the join condition.
+- Fan-out: one title has many cast rows. Title-level metrics must use `count(distinct show_id)` or pre-aggregate the bridge.
 - Issues: type mismatch: show_id is BIGINT, show_id is DOUBLE; 10 child row(s) have no matching parent value in show_id
 - Checks:
   - `show_id`: child BIGINT, parent DOUBLE, orphan rows 10
 
 ### `fk_netflix_titles_category_show_id`
 
-- Status: proposed
-- Meaning: Each child row is a credit for one title in the parent table.
+- Status: approved
+- Meaning: Each child row is a category tag for one title in the parent table.
 - Enforceable now: no
+- Enabled for joins: yes
+- Join policy: inner
+- Normalization child: none
+- Normalization parent: cast BIGINT
+- Normalization note: the parent is DOUBLE and the child is BIGINT, so the parent key is cast to BIGINT in the join condition.
+- Fan-out: one title has many category rows. Title-level metrics must use `count(distinct show_id)` or pre-aggregate the bridge.
 - Issues: type mismatch: show_id is BIGINT, show_id is DOUBLE; 3 child row(s) have no matching parent value in show_id
 - Checks:
   - `show_id`: child BIGINT, parent DOUBLE, orphan rows 3
 
 ### `fk_netflix_titles_countries_show_id`
 
-- Status: proposed
-- Meaning: Each child row is a credit for one title in the parent table.
+- Status: approved
+- Meaning: Each child row is a country credit for one title in the parent table.
 - Enforceable now: no
+- Enabled for joins: yes
+- Join policy: inner
+- Normalization child: none
+- Normalization parent: cast BIGINT
+- Normalization note: the parent is DOUBLE and the child is BIGINT, so the parent key is cast to BIGINT in the join condition.
+- Fan-out: one title has many country rows. Title-level metrics must use `count(distinct show_id)` or pre-aggregate the bridge.
 - Issues: type mismatch: show_id is BIGINT, show_id is DOUBLE; 2 child row(s) have no matching parent value in show_id
 - Checks:
   - `show_id`: child BIGINT, parent DOUBLE, orphan rows 2
 
 ### `fk_netflix_titles_directors_show_id`
 
-- Status: proposed
-- Meaning: Each child row is a credit for one title in the parent table.
+- Status: approved
+- Meaning: Each child row is a director credit for one title in the parent table.
 - Enforceable now: no
+- Enabled for joins: yes
+- Join policy: inner
+- Normalization child: none
+- Normalization parent: cast BIGINT
+- Normalization note: the parent is DOUBLE and the child is BIGINT, so the parent key is cast to BIGINT in the join condition.
+- Fan-out: one title has many director rows, and one (show_id, director) pair is duplicated. Title-level metrics must use `count(distinct show_id)` or pre-aggregate the bridge.
 - Issues: type mismatch: show_id is BIGINT, show_id is DOUBLE; 2 child row(s) have no matching parent value in show_id
 - Checks:
   - `show_id`: child BIGINT, parent DOUBLE, orphan rows 2

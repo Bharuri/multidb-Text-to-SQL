@@ -1,145 +1,127 @@
-"""Stage 4 (llm). Streams one Bedrock ConverseStream call and returns the whole reply.
+"""LLM provider abstraction (C3).
 
-Credentials are never put in an error message. Errors carry the AWS error code or the exception type only.
+The pipeline depends only on `LlmClient.complete`. The Bedrock adapter streams through
+`converse_stream` when the caller passes a chunk callback, and falls back to `converse`
+otherwise. Any provider failure is raised as `LlmError`, which the pipeline reports as
+the `llm_error` category.
 """
 
 from __future__ import annotations
 
+import os
 from collections.abc import Callable
-from dataclasses import dataclass
-from typing import Any
+from dataclasses import dataclass, field
+from typing import Any, Protocol
 
-import boto3
-from botocore.exceptions import BotoCoreError, ClientError, NoCredentialsError, PartialCredentialsError
-
-from src.query.plan import PlanError
-from src.query.sql_reply import parse_sql_reply
+from src.query.config import LlmSettings
 
 
 class LlmError(Exception):
-    """The LLM call failed. The message is safe to show to the user."""
-
-
-class SqlReplyError(Exception):
-    """The SQL generator's reply was not the strict {"sql", "params"} shape. Keeps the raw reply for the trace."""
-
-    def __init__(self, reasons: list[str], raw: str) -> None:
-        super().__init__("; ".join(reasons))
-        self.reasons = tuple(reasons)
-        self.raw = raw
+    category = "llm_error"
 
 
 @dataclass(frozen=True)
-class SqlReply:
-    raw: str
-    sql: str
-    params: list[Any]
+class Credentials:
+    """Optional static AWS keys. Secret fields are excluded from repr so they never reach logs."""
+
+    access_key_id: str = field(repr=False)
+    secret_access_key: str = field(repr=False)
+    session_token: str | None = field(default=None, repr=False)
 
 
-def complete(
-    prompt: str,
-    *,
-    model_id: str,
-    region: str,
-    temperature: float,
-    max_output_tokens: int,
-    access_key_id: str | None = None,
-    secret_access_key: str | None = None,
-    session_token: str | None = None,
-    on_chunk: Callable[[str], None] | None = None,
-    client: Any = None,
-) -> str:
-    """Send the prompt and return the full reply. Each text chunk goes to on_chunk as it arrives.
+def masked_access_key(key: str) -> str:
+    """First four and last four characters only; the full ID is never shown."""
+    return f"{key[:4]}…{key[-4:]}" if len(key) > 8 else "****"
 
-    Pass client only in tests. Without it, a bedrock-runtime client is built from the supplied keys,
-    or from the default AWS credential chain when no keys are given.
-    """
+
+def profile_status() -> str | None:
+    """Describe the profile chain's access key ID without reading the secret."""
+    import boto3
+
     try:
-        if client is None:
-            client = _bedrock_client(region, access_key_id, secret_access_key, session_token)
-        response = client.converse_stream(
-            modelId=model_id,
-            messages=[{"role": "user", "content": [{"text": prompt}]}],
-            inferenceConfig={"temperature": temperature, "maxTokens": max_output_tokens},
-        )
-        chunks: list[str] = []
-        for event in response["stream"]:
-            text = _text_of(event)
-            if text:
-                chunks.append(text)
-                if on_chunk is not None:
-                    on_chunk(text)
-    except LlmError:
-        raise
-    except ClientError as error:
-        code = error.response.get("Error", {}).get("Code", "Unknown")
-        raise LlmError(f"Bedrock rejected the request ({code}).") from None
-    except (NoCredentialsError, PartialCredentialsError):
-        raise LlmError("No AWS credentials found. Enter keys in the sidebar or configure the AWS credential chain.") from None
-    except BotoCoreError as error:
-        raise LlmError(f"Could not reach Bedrock in {region} ({type(error).__name__}).") from None
-    except Exception as error:
-        raise LlmError(f"LLM call failed ({type(error).__name__}).") from None
-
-    reply = "".join(chunks)
-    if not reply.strip():
-        raise LlmError("The LLM returned no text.")
-    return reply
+        resolved = boto3.Session().get_credentials()
+    except Exception:  # noqa: BLE001 - missing or broken profile; the form still works
+        return None
+    if resolved is None or not resolved.access_key:
+        return None
+    profile = os.environ.get("AWS_PROFILE", "default")
+    return f"Using AWS profile '{profile}' (access key ID {masked_access_key(resolved.access_key)})."
 
 
-def _text_of(event: dict[str, Any]) -> str:
-    """Return the text of a content delta. A stream error event raises LlmError with its code only."""
-    error_codes = [key for key in event if key.endswith("Exception")]
-    if error_codes:
-        raise LlmError(f"Bedrock stream error ({error_codes[0]}).")
-    delta = event.get("contentBlockDelta", {}).get("delta", {})
-    return delta.get("text", "")
+def boto_session(region: str, profile_name: str | None = None, credentials: Credentials | None = None) -> Any:
+    """Explicit keys win; otherwise the AWS profile chain is used."""
+    import boto3
 
-
-def _bedrock_client(region: str, access_key_id: str | None, secret_access_key: str | None, session_token: str | None) -> Any:
-    if access_key_id and secret_access_key:
-        session = boto3.Session(
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key,
-            aws_session_token=session_token,
+    if credentials is not None:
+        return boto3.Session(
+            aws_access_key_id=credentials.access_key_id,
+            aws_secret_access_key=credentials.secret_access_key,
+            aws_session_token=credentials.session_token,
             region_name=region,
         )
-    else:
-        session = boto3.Session(region_name=region)
-    return session.client("bedrock-runtime")
+    return boto3.Session(profile_name=profile_name, region_name=region)
 
 
-def generate_sql(
-    prompt: str,
-    *,
-    model_id: str,
-    region: str,
-    temperature: float,
-    max_output_tokens: int,
-    access_key_id: str | None = None,
-    secret_access_key: str | None = None,
-    session_token: str | None = None,
-    on_chunk: Callable[[str], None] | None = None,
-    client: Any = None,
-) -> SqlReply:
-    """The SQL-generator call. It is a separate call from the planner and is never retried.
+class LlmClient(Protocol):
+    def complete(self, prompt: str, on_chunk: Callable[[str], None] | None = None) -> str: ...
 
-    LlmError from the transport propagates unchanged. A malformed reply raises SqlReplyError with the raw text.
-    """
-    raw = complete(
-        prompt,
-        model_id=model_id,
-        region=region,
-        temperature=temperature,
-        max_output_tokens=max_output_tokens,
-        access_key_id=access_key_id,
-        secret_access_key=secret_access_key,
-        session_token=session_token,
-        on_chunk=on_chunk,
-        client=client,
-    )
-    try:
-        parsed = parse_sql_reply(raw)
-    except PlanError as error:
-        raise SqlReplyError(list(error.reasons), raw) from None
-    return SqlReply(raw=raw, sql=parsed["sql"], params=parsed["params"])
+
+class BedrockClient:
+    def __init__(
+        self,
+        settings: LlmSettings,
+        profile_name: str | None = None,
+        runtime: Any = None,
+        credentials: Credentials | None = None,
+    ):
+        if settings.provider != "bedrock":
+            raise LlmError(f"unsupported LLM provider: {settings.provider}")
+        self._settings = settings
+        if runtime is None:
+            try:
+                session = boto_session(settings.region, profile_name, credentials)
+                runtime = session.client("bedrock-runtime")
+            except Exception as exc:  # credentials, region, or botocore configuration problems
+                raise LlmError(f"could not create Bedrock client: {type(exc).__name__}") from exc
+        self._runtime = runtime
+
+    def complete(self, prompt: str, on_chunk: Callable[[str], None] | None = None) -> str:
+        request = {
+            "modelId": self._settings.model_id,
+            "messages": [{"role": "user", "content": [{"text": prompt}]}],
+            "inferenceConfig": {
+                "temperature": self._settings.temperature,
+                "maxTokens": self._settings.max_output_tokens,
+            },
+        }
+        try:
+            if on_chunk is None:
+                response = self._runtime.converse(**request)
+                blocks = response["output"]["message"]["content"]
+                return "".join(block.get("text", "") for block in blocks)
+            return self._stream(request, on_chunk)
+        except LlmError:
+            raise
+        except Exception as exc:
+            raise LlmError(f"Bedrock call failed: {type(exc).__name__}") from exc
+
+    def _stream(self, request: dict[str, Any], on_chunk: Callable[[str], None]) -> str:
+        response = self._runtime.converse_stream(**request)
+        parts: list[str] = []
+        for event in response["stream"]:
+            delta = event.get("contentBlockDelta", {}).get("delta", {})
+            text = delta.get("text")
+            if text:
+                parts.append(text)
+                on_chunk(text)
+        return "".join(parts)
+
+
+def make_client(
+    settings: LlmSettings,
+    profile_name: str | None = None,
+    credentials: Credentials | None = None,
+) -> LlmClient:
+    if settings.provider != "bedrock":
+        raise LlmError(f"unsupported LLM provider: {settings.provider}")
+    return BedrockClient(settings, profile_name=profile_name, credentials=credentials)

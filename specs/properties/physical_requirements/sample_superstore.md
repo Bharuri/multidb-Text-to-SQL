@@ -66,23 +66,33 @@ Describe the `sample_superstore` schema in `databases/sample_superstore.duckdb`:
 
 | Relationship | Child (table.column) | Parent (table.column) | Cardinality | Enforceable now |
 |---|---|---|---|---|
-| `fk_returns_order_id` | `Returns.Order_ID` | `Orders.Order_ID` | many-to-one | no |
+| `fk_returns_order_id` | `Orders.Order_ID` | `Returns.Order_ID` | many-to-one | no |
 | `fk_orders_region` | `Orders.Region` | `People.Region` | many-to-one | yes |
 
 ### `fk_returns_order_id`
 
-- Status: proposed
-- Meaning: Each return refers to an order ID. Orders has one row per line item, so Order_ID repeats.
+- Status: approved
+- Meaning: Each order line may have a return. Returns has one row per returned order, so Order_ID is unique on the parent side. Only 296 of the 5,111 distinct orders have a return, so the link is optional.
 - Enforceable now: no
-- Issues: parent column Order_ID is not unique
+- Enabled for joins: yes
+- Join policy: left
+- Normalization child: none
+- Normalization parent: none
+- Fan-out: Returns is unique per Order_ID, so Orders-to-Returns does not multiply rows. The reverse path (Returns to Orders) repeats each return once per order line (800 lines match). Return-side metrics must use `count(distinct Order_ID)` or pre-aggregate before joining.
+- Issues: none for the join direction. Foreign key is not declared because 9,394 order lines have no matching return, which is expected for an optional parent.
 - Checks:
-  - `Order_ID`: child VARCHAR, parent VARCHAR, orphan rows 0
+  - `Order_ID`: child VARCHAR, parent VARCHAR, orphan rows 9394
 
 ### `fk_orders_region`
 
-- Status: proposed
+- Status: approved
 - Meaning: Each order line belongs to one regional manager region listed in People.
 - Enforceable now: yes
+- Enabled for joins: yes
+- Join policy: inner
+- Normalization child: none
+- Normalization parent: none
+- Fan-out: none; Region is unique in People.
 - Issues: none
 - Checks:
   - `Region`: child VARCHAR, parent VARCHAR, orphan rows 0

@@ -160,6 +160,16 @@ Flagged values are reported, not removed or corrected.
 
 None in this schema.
 
+## Metric definitions
+
+Format and lifecycle are in [requirement_retrival.md](../../retrival/requirement_retrival.md) §6.1 and [design.md](../../retrival/design.md) §3.3.
+
+No metrics are authored for this database. Metrics are proposed from the schema and the question, then saved only when the user accepts them in the UI.
+
+```yaml
+metrics: []
+```
+
 ## Acceptance criteria
 
 - The YAML covers all 13 columns in `airbnb`'s physical mapping, with the same names.
@@ -173,4 +183,4 @@ None in this schema.
 
 Each has a recommended answer. Project-level questions (case matching, identifier list, synonym file location) are in [semantic_requirements.md](../semantic_requirements.md).
 
-1. **Numeric columns with few values.** `AirBnB_NYC.Number_of_Records` has a single value, so it gets categorical values and numeric rules. Should it keep both? *Recommended: keep both, as for `Bills.Session`.*
+1. **Numeric columns with few values.** `AirBnB_NYC.Number_of_Records` has a single value, so it gets categorical values and numeric rules. Should it keep both? *Recommended: keep both, as for `Bills.Session`.*

@@ -1,0 +1,175 @@
+{
+  "run": {
+    "mode": "live",
+    "started_at": "2026-10-14T22:09:38+00:00",
+    "finished_at": "2026-10-14T22:09:53+00:00",
+    "models": {
+      "planner": "us.amazon.nova-2-lite-v1:0 (us-east-1)",
+      "sql_generator": "us.amazon.nova-2-lite-v1:0 (us-east-1)"
+    },
+    "questions_file": "specs/retrival/evaluation_question.md",
+    "manifest_file": "tests/benchmark/manifest.yaml"
+  },
+  "summary": {
+    "questions": 1,
+    "response_status": {
+      "rejected": 1
+    },
+    "outcome": {
+      "not_answered": 1
+    },
+    "oracle": {
+      "not_run": 1
+    },
+    "verified": [],
+    "not_answered": [
+      "SS01"
+    ],
+    "false_or_unexpected": []
+  },
+  "questions": [
+    {
+      "id": "SS01",
+      "title": "Monthly sales and profit with prior-month comparison",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: invalid JSON at character 583"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 14890.1,
+      "stage_ms": 14891.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 79.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 848
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 7970
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 14781.0,
+          "output": {
+            "attempts": 2,
+            "characters": 6192
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: invalid JSON at character 583",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    }
+  ]
+}

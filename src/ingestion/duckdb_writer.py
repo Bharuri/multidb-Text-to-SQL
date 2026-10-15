@@ -110,6 +110,9 @@ def load_workbook(
     result = LoadResult(database=database_dir / f"{schema}.duckdb")
     connection = open_workbook_database(database_dir, workbook_path)
     try:
+        # Rebuild the workbook schema so sheets removed from the source do not linger.
+        connection.execute(f"DROP SCHEMA IF EXISTS {quote_identifier(schema)} CASCADE")
+        connection.execute(f"CREATE SCHEMA {quote_identifier(schema)}")
         table_names = unique_names(list(sheets))
         for sheet_name, table in zip(sheets, table_names):
             try:

@@ -1,0 +1,4325 @@
+{
+  "run": {
+    "mode": "live",
+    "started_at": "2026-10-14T21:17:53+00:00",
+    "finished_at": "2026-10-14T21:20:14+00:00",
+    "models": {
+      "planner": "us.amazon.nova-2-lite-v1:0 (us-east-1)",
+      "sql_generator": "us.amazon.nova-2-lite-v1:0 (us-east-1)"
+    },
+    "questions_file": "specs/retrival/evaluation_question.md",
+    "manifest_file": "tests/benchmark/manifest.yaml"
+  },
+  "summary": {
+    "questions": 30,
+    "response_status": {
+      "cannot_answer": 4,
+      "rejected": 26
+    },
+    "outcome": {
+      "not_answered": 17,
+      "unexpected_status": 12,
+      "as_expected": 1
+    },
+    "oracle": {
+      "not_run": 17,
+      "no_oracle": 13
+    },
+    "verified": [],
+    "not_answered": [
+      "SS01",
+      "SS02",
+      "SS03",
+      "SS05",
+      "SS07",
+      "SS09",
+      "SS10",
+      "SS11",
+      "SS12",
+      "SS14",
+      "SS15",
+      "SS16",
+      "SS17",
+      "SS18",
+      "NF01",
+      "NF04",
+      "NF05"
+    ],
+    "false_or_unexpected": [
+      "SS04",
+      "SS06",
+      "SS08",
+      "SS13",
+      "CO01",
+      "CO02",
+      "CO03",
+      "AB01",
+      "AB02",
+      "AB03",
+      "AB04",
+      "NF03"
+    ]
+  },
+  "questions": [
+    {
+      "id": "SS01",
+      "title": "Monthly sales and profit with prior-month comparison",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "The context does not include a table or column named 'customers'. Without access to customer data, the request to compute distinct customers cannot be fulfilled."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 2365.1,
+      "stage_ms": 2375.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 62.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 347
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3611
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 2282.0,
+          "output": {
+            "characters": 275
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "The context does not include a table or column named 'customers'. Without access to customer data, the request to compute distinct customers cannot be fulfilled.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS02",
+      "title": "Top three sub-categories per region with tie-aware ranking",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: missing keys: filters"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 5184.5,
+      "stage_ms": 5187.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 15.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 63.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 852
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4001
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 5109.0,
+          "output": {
+            "characters": 5520
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: missing keys: filters",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS03",
+      "title": "Customer first order, second order, and elapsed days",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: missing keys: joins, filters"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 4520.9,
+      "stage_ms": 4516.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 63.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 715
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3901
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 4422.0,
+          "output": {
+            "characters": 6165
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: missing keys: joins, filters",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS04",
+      "title": "Customer cohort retention by first-order month",
+      "database": "sample_superstore",
+      "manifest_status": "clarification",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: duplicate key 'name'"
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 5902.7,
+      "stage_ms": 5906.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 109.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 715
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3859
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 5766.0,
+          "output": {
+            "characters": 5972
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: duplicate key 'name'",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS05",
+      "title": "Pareto contribution of products within each category",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: planner output has text outside a single fenced block"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 7223.4,
+      "stage_ms": 7219.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 16.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 62.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 238
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3444
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 7141.0,
+          "output": {
+            "characters": 9002
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: planner output has text outside a single fenced block",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS06",
+      "title": "Discount bands and profitability",
+      "database": "sample_superstore",
+      "manifest_status": "needs_config",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan.clarification: missing keys: message"
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 1159.1,
+      "stage_ms": 1157.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 16.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 676
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3923
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 1094.0,
+          "output": {
+            "characters": 191
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan.clarification: missing keys: message",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS07",
+      "title": "Shipping delay and profitability",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: missing keys: filters"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 5426.9,
+      "stage_ms": 5438.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 882
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4110
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 5360.0,
+          "output": {
+            "characters": 5545
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: missing keys: filters",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS08",
+      "title": "State-level performance against regional baseline",
+      "database": "sample_superstore",
+      "manifest_status": "clarification",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: planner output has text outside a single fenced block"
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 7143.8,
+      "stage_ms": 7141.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 995
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4244
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 7063.0,
+          "output": {
+            "characters": 9158
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: planner output has text outside a single fenced block",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS09",
+      "title": "Products with sales but persistent loss",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan.clarification: missing keys: message"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 1301.2,
+      "stage_ms": 1297.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 63.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 631
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3857
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 1203.0,
+          "output": {
+            "characters": 566
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan.clarification: missing keys: message",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS10",
+      "title": "Repeat-customer revenue concentration",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: planner output has text outside a single fenced block"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 6981.5,
+      "stage_ms": 6984.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 63.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 802
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4025
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 6890.0,
+          "output": {
+            "characters": 9293
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: planner output has text outside a single fenced block",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS11",
+      "title": "Month-over-month and year-over-year comparison",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: missing keys: joins, filters"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 7585.0,
+      "stage_ms": 7578.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 271
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3465
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 7500.0,
+          "output": {
+            "characters": 5933
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: missing keys: joins, filters",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS12",
+      "title": "Order-level discount exposure and profitability",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: missing keys: joins, filters"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 6035.7,
+      "stage_ms": 6031.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 62.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 697
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3982
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 5938.0,
+          "output": {
+            "characters": 8007
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: missing keys: joins, filters",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS13",
+      "title": "Customer purchase intervals and irregularity",
+      "database": "sample_superstore",
+      "manifest_status": "gap",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: missing keys: joins, filters, clarification"
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 6729.3,
+      "stage_ms": 6719.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 609
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3824
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 6641.0,
+          "output": {
+            "characters": 8533
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: missing keys: joins, filters, clarification",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS14",
+      "title": "Sub-category mix shift by year",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: planner output has text outside a single fenced block"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 7032.1,
+      "stage_ms": 7031.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 63.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 503
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3677
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 6937.0,
+          "output": {
+            "characters": 9352
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: planner output has text outside a single fenced block",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS15",
+      "title": "Customers buying across categories",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "The question references 'customers', but the available tables (Orders, Returns) do not contain customer identifiers. Without a customer key, we cannot identify or group purchases by customer."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 1095.1,
+      "stage_ms": 1093.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 780
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3976
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 1015.0,
+          "output": {
+            "characters": 305
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "The question references 'customers', but the available tables (Orders, Returns) do not contain customer identifiers. Without a customer key, we cannot identify or group purchases by customer.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS16",
+      "title": "High sales but low profit anomaly detection",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: planner output has text outside a single fenced block"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 8093.6,
+      "stage_ms": 8093.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 62.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 676
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3925
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 8000.0,
+          "output": {
+            "characters": 9806
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: planner output has text outside a single fenced block",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS17",
+      "title": "Ship-date versus order-date seasonal analysis",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: planner output has text outside a single fenced block"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 7207.0,
+      "stage_ms": 7218.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 606
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3844
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 7140.0,
+          "output": {
+            "characters": 7857
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: planner output has text outside a single fenced block",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS18",
+      "title": "Conditional order fulfillment profile",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: missing keys: filters, clarification"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 4595.0,
+      "stage_ms": 4594.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 986
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4208
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 4516.0,
+          "output": {
+            "characters": 5165
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: missing keys: filters, clarification",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "CO01",
+      "title": "Vote outcome patterns by party and session",
+      "database": "_113thCongress",
+      "manifest_status": "profile_first",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: missing keys: joins, filters"
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 6617.5,
+      "stage_ms": 6609.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 923
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4073
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 6531.0,
+          "output": {
+            "characters": 8613
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: missing keys: joins, filters",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "CO02",
+      "title": "Bill passage and majority margin",
+      "database": "_113thCongress",
+      "manifest_status": "profile_first",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: planner output has text outside a single fenced block"
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 7346.2,
+      "stage_ms": 7343.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 1089
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4278
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 7265.0,
+          "output": {
+            "characters": 8647
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: planner output has text outside a single fenced block",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "CO03",
+      "title": "Sponsor and committee summary",
+      "database": "_113thCongress",
+      "manifest_status": "profile_first",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: missing keys: filters"
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 4066.0,
+      "stage_ms": 4062.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 1509
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4716
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 3984.0,
+          "output": {
+            "characters": 4752
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: missing keys: filters",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "AB01",
+      "title": "Host portfolio concentration",
+      "database": "airbnb",
+      "manifest_status": "profile_first",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: planner output has text outside a single fenced block"
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 6220.3,
+      "stage_ms": 6219.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 16.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 299
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3492
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 6156.0,
+          "output": {
+            "characters": 8814
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: planner output has text outside a single fenced block",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "AB02",
+      "title": "Price distribution and outliers",
+      "database": "airbnb",
+      "manifest_status": "gap",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan.clarification.message: must be at most 500 characters"
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 1352.0,
+      "stage_ms": 1359.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 447
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3657
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 1297.0,
+          "output": {
+            "characters": 640
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan.clarification.message: must be at most 500 characters",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "AB03",
+      "title": "Host tenure and review performance",
+      "database": "airbnb",
+      "manifest_status": "needs_config",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: missing keys: joins, filters"
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 3009.7,
+      "stage_ms": 3015.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 15.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 32.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 366
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3629
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 2968.0,
+          "output": {
+            "characters": 2478
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: missing keys: joins, filters",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "AB04",
+      "title": "Price versus review rating relationship",
+      "database": "airbnb",
+      "manifest_status": "clarification",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: missing keys: joins, filters"
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 6952.4,
+      "stage_ms": 6953.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 16.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 333
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3599
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 6906.0,
+          "output": {
+            "characters": 4385
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: missing keys: joins, filters",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "NF01",
+      "title": "Catalogue growth and year-over-year change",
+      "database": "netflix_titles",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan: missing keys: joins, filters, clarification"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 3613.3,
+      "stage_ms": 3609.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 15.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 63.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 172
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3339
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 3531.0,
+          "output": {
+            "characters": 3241
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan: missing keys: joins, filters, clarification",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "NF02",
+      "title": "Genre/category growth and catalogue mix",
+      "database": "netflix_titles",
+      "manifest_status": "profile_first",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "The question references 'category' and 'mix' metrics, which are not available in the provided table schema. The table only contains 'date_added', 'release_year', and 'title' columns, and no approved metrics are defined."
+      ],
+      "outcome": "as_expected",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 1462.6,
+      "stage_ms": 1468.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 140
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3301
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 1390.0,
+          "output": {
+            "characters": 333
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "The question references 'category' and 'mix' metrics, which are not available in the provided table schema. The table only contains 'date_added', 'release_year', and 'title' columns, and no approved metrics are defined.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "NF03",
+      "title": "Director portfolio analysis",
+      "database": "netflix_titles",
+      "manifest_status": "needs_config",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan.clarification: missing keys: message"
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 1009.6,
+      "stage_ms": 1000.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 15.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 596
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3805
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 938.0,
+          "output": {
+            "characters": 145
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan.clarification: missing keys: message",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "NF04",
+      "title": "Country and category collaboration",
+      "database": "netflix_titles",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "The question references 'category' which is not a column in the provided schema. The available categorical columns are 'type', 'rating', and 'duration_seasons' in the netflix_titles table, and 'country' in the netflix_titles_countries table. Please clarify which column should be used as the 'category'."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 1304.2,
+      "stage_ms": 1297.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 16.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 46.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 715
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3944
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 1235.0,
+          "output": {
+            "characters": 417
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "The question references 'category' which is not a column in the provided schema. The available categorical columns are 'type', 'rating', and 'duration_seasons' in the netflix_titles table, and 'country' in the netflix_titles_countries table. Please clarify which column should be used as the 'category'.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "NF05",
+      "title": "Cast breadth and repeat appearances",
+      "database": "netflix_titles",
+      "manifest_status": "answerable",
+      "response_status": "rejected",
+      "category": "invalid_plan",
+      "reasons": [
+        "plan.clarification: missing keys: message"
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 1608.1,
+      "stage_ms": 1609.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 16.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 679
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3923
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 1562.0,
+          "output": {
+            "characters": 138
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "failed",
+          "category": "invalid_plan",
+          "reason": "plan.clarification: missing keys: message",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    }
+  ]
+}

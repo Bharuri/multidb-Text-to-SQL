@@ -161,6 +161,16 @@ Flagged values are reported, not removed or corrected.
 
 - `Bills.Required_for_Majority`: **suspect_value**. looks like a year or date, not a category; kept in values; review before use (values: 2013-01-02 00:00:00, 2013-03-05 00:00:00, 2014-01-02 00:00:00, 2014-03-05 00:00:00)
 
+## Metric definitions
+
+Format and lifecycle are in [requirement_retrival.md](../../retrival/requirement_retrival.md) §6.1 and [design.md](../../retrival/design.md) §3.3.
+
+No metrics are authored for this database. Metrics are proposed from the schema and the question, then saved only when the user accepts them in the UI.
+
+```yaml
+metrics: []
+```
+
 ## Acceptance criteria
 
 - The YAML covers all 26 columns in `_113thCongress`'s physical mapping, with the same names.

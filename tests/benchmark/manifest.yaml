@@ -1,0 +1,408 @@
+# Benchmark manifest for specs/retrival/evaluation_question.md.
+#
+# Prompt text is NOT copied here. The runner reads each prompt from the source
+# file by its ID, so the two cannot drift apart.
+#
+# status = what the system should do today, given config.yaml and the validators:
+#   answerable      Should produce an answer.
+#   clarification   Should ask the user for a definition before answering.
+#   needs_config    Needs a configured value (band boundaries, as-of date, rating group).
+#   profile_first   Answerable only after the data grain/key is profiled and confirmed.
+#   gap             Needs a capability that is gated off or not allowlisted. Report, do not fake.
+#
+# split: every question is "development" (user decision). Requirement §17 asks for a
+# held-out subset; that conflicts with this decision and is reported separately.
+
+version: 1
+split: development
+
+questions:
+  - id: SS01
+    database: sample_superstore
+    title: Monthly sales and profit with prior-month comparison
+    status: answerable
+    grain: sub_category x calendar_month
+    tags: [ctes, aggregation, date_grain, lag, safe_division, case, multi_metric]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Observed months only (question default). Flag drops over 15 percent.
+
+  - id: SS02
+    database: sample_superstore
+    title: Top three sub-categories per region with tie-aware ranking
+    status: answerable
+    grain: region x sub_category
+    tags: [ctes, grouped_aggregation, rank, ratio_of_aggregates, top_n_per_group]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Margin is defined inline as SUM(Profit)/SUM(Sales). Ties keep rank via RANK.
+
+  - id: SS03
+    database: sample_superstore
+    title: Customer first order, second order, and elapsed days
+    status: answerable
+    grain: customer (order-level dedup)
+    tags: [ctes, distinct_order_grain, row_number, conditional_aggregation, date_diff, null_handling]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Count distinct Order_ID, not line items.
+
+  - id: SS04
+    database: sample_superstore
+    title: Customer cohort retention by first-order month
+    status: clarification
+    grain: cohort_month x months_since_first_order
+    tags: [ctes, customer_dedup, date_arithmetic, cross_period_aggregation, safe_division]
+    blockers: []
+    metric_terms: [active]
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: The term active is not defined in the question. Needs a confirmed definition.
+
+  - id: SS05
+    database: sample_superstore
+    title: Pareto contribution of products within each category
+    status: answerable
+    grain: category x product
+    tags: [ctes, aggregate, window_cumulative_sum, window_total, safe_division, threshold_crossing]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Tie order must be deterministic (oracle sorts by sales then product name).
+
+  - id: SS06
+    database: sample_superstore
+    title: Discount bands and profitability
+    status: needs_config
+    grain: category x discount_band
+    tags: [case, conditional_grouping, multiple_aggregations, having, semantic_configuration]
+    blockers: [config:discount_band_boundaries]
+    metric_terms: []
+    config_needs: [discount band boundaries]
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Boundaries must be configured, never invented by the SQL generator.
+
+  - id: SS07
+    database: sample_superstore
+    title: Shipping delay and profitability
+    status: answerable
+    grain: ship_mode x region
+    tags: [date_diff, median, ctes, window_ranking, comparison_to_benchmark]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Median is allowed (not gated). Percentile wording in tags is not required.
+
+  - id: SS08
+    database: sample_superstore
+    title: State-level performance against regional baseline
+    status: clarification
+    grain: state
+    tags: [ctes, multi_grain_aggregation, comparison_to_baseline, case, or_predicates]
+    blockers: []
+    metric_terms: [margin]
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Profit margin has no formula in this question. Use the SS02 formula once confirmed.
+
+  - id: SS09
+    database: sample_superstore
+    title: Products with sales but persistent loss
+    status: answerable
+    grain: product
+    tags: [aggregation, having, ctes, negative_conditional_aggregation, ranking, safe_division]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Persistent is defined in the question as negative total profit over the whole dataset.
+
+  - id: SS10
+    database: sample_superstore
+    title: Repeat-customer revenue concentration
+    status: answerable
+    grain: customer, then repeat class
+    tags: [customer_cte, conditional_classification, aggregation_over_aggregation, distinct_counts, ratios]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Class uses distinct Order_ID.
+
+  - id: SS11
+    database: sample_superstore
+    title: Month-over-month and year-over-year comparison
+    status: answerable
+    grain: year x month
+    tags: [calendar_grain, lag, multiple_window_partitions, ctes, safe_division, top_bottom_ranking]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Same-month-prior-year uses a year/month key, not the prior observed row.
+
+  - id: SS12
+    database: sample_superstore
+    title: Order-level discount exposure and profitability
+    status: answerable
+    grain: order, then segment and decile
+    tags: [two_stage_aggregation, derived_expression, ranking_decile, ctes]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: NTILE is not allowlisted. Use ROW_NUMBER with a count window for deciles. The question asks the formula to be stated explicitly; sales-weighted discount is one option, not fixed by the question.
+
+  - id: SS13
+    database: sample_superstore
+    title: Customer purchase intervals and irregularity
+    status: gap
+    grain: customer order sequence
+    tags: [dedup, lag, date_diff, median, standard_deviation, having, ranking]
+    blockers: [allowlist:stddev_samp, allowlist:variance]
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Median is allowed. Standard deviation and variance are not allowlisted, so this is a known gap.
+
+  - id: SS14
+    database: sample_superstore
+    title: Sub-category mix shift by year
+    status: answerable
+    grain: year x region x sub_category
+    tags: [multi_grain_aggregation, window_total, lag, safe_division, top_n_per_group]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: none
+
+  - id: SS15
+    database: sample_superstore
+    title: Customers buying across categories
+    status: answerable
+    grain: customer
+    tags: [multi_stage_ctes, distinct_aggregation, conditional_aggregation, date_sequencing, anti_fan_out]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: First order with several categories needs an order-level rule. The oracle uses the earliest order date and counts categories there.
+
+  - id: SS16
+    database: sample_superstore
+    title: High sales but low profit anomaly detection
+    status: answerable
+    grain: sub_category
+    tags: [aggregation, median, comparison_to_global_baseline, safe_division]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: High is defined as above the dataset median. Low margin is below the overall margin.
+
+  - id: SS17
+    database: sample_superstore
+    title: Ship-date versus order-date seasonal analysis
+    status: answerable
+    grain: month (order axis and ship axis)
+    tags: [date_truncation, multiple_date_roles, ctes, conditional_aggregation]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Sales are line values on two time axes, not two separate sales amounts.
+
+  - id: SS18
+    database: sample_superstore
+    title: Conditional order fulfillment profile
+    status: answerable
+    grain: order, then region and segment
+    tags: [order_pre_aggregation, case, date_arithmetic, conditional_metrics, multi_stage_aggregation]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Same, next, or later month is defined by month difference.
+
+  - id: CO01
+    database: _113thCongress
+    title: Vote outcome patterns by party and session
+    status: profile_first
+    grain: to be confirmed (vote row vs bill row vs pre-aggregated)
+    tags: [conditional_aggregation, percentages, multi_dimensional_grouping, null_handling]
+    blockers: [profile:row_grain]
+    metric_terms: []
+    config_needs: []
+    profile_needs: [row grain of Bills, meaning of Vote/Party/Count, whether totals are pre-aggregated]
+    oracle: reference_sql
+    caveat: Do not assume one row equals one vote.
+
+  - id: CO02
+    database: _113thCongress
+    title: Bill passage and majority margin
+    status: profile_first
+    grain: validated bill/vote grain
+    tags: [derived_metrics, case, safe_division, ranking, ctes]
+    blockers: [profile:row_grain]
+    metric_terms: []
+    config_needs: []
+    profile_needs: [validated grain, whether totals are already aggregated]
+    oracle: reference_sql
+    caveat: Use only fields with verified meaning and units.
+
+  - id: CO03
+    database: _113thCongress
+    title: Sponsor and committee summary
+    status: profile_first
+    grain: bill x sponsor
+    tags: [validated_join, distinct_aggregation, multi_stage_grouping, median, window_ranking]
+    blockers: [profile:join_cardinality]
+    metric_terms: []
+    config_needs: []
+    profile_needs: [Source_URL cardinality on both sheets, uniqueness of Sunlight_Info Source_URL]
+    oracle: reference_sql
+    caveat: Join uses lower(trim(Source_URL)) on both sides. If cardinality fails, the expected result is a cannot-answer metadata gap.
+
+  - id: AB01
+    database: airbnb
+    title: Host portfolio concentration
+    status: profile_first
+    grain: host x neighbourhood
+    tags: [aggregation, multiple_grains, ctes, median, window_ranking]
+    blockers: [profile:listing_uniqueness]
+    metric_terms: []
+    config_needs: []
+    profile_needs: [whether each row is one unique listing, use of Number_of_Records]
+    oracle: reference_sql
+    caveat: One host can span neighbourhoods. Ranking is at host x neighbourhood grain.
+
+  - id: AB02
+    database: airbnb
+    title: Price distribution and outliers
+    status: gap
+    grain: neighbourhood x room_type
+    tags: [percentile_functions, ctes, conditional_aggregation, safe_division, filtering]
+    blockers: [capability:percentiles]
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: 25th and 75th percentiles need quantile_cont, which is gated off. Known gap.
+
+  - id: AB03
+    database: airbnb
+    title: Host tenure and review performance
+    status: needs_config
+    grain: tenure_band x room_type
+    tags: [date_arithmetic, case, multi_stage_aggregation, baseline_comparison]
+    blockers: [config:as_of_date]
+    metric_terms: []
+    config_needs: [explicit as-of date for tenure bands]
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Review rate is reviews per listing, not a time-based rate. Do not use the machine date.
+
+  - id: AB04
+    database: airbnb
+    title: Price versus review rating relationship
+    status: clarification
+    grain: neighbourhood x room_type
+    tags: [multi_stage_aggregation, medians, baseline_comparison, semantic_ambiguity]
+    blockers: []
+    metric_terms: [rating_adjusted_price]
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: No formula for rating-adjusted price. Return components and ask for clarification.
+
+  - id: NF01
+    database: netflix_titles
+    title: Catalogue growth and year-over-year change
+    status: answerable
+    grain: year_added x type
+    tags: [date_extraction, conditional_aggregation, lag, safe_division, ranking]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: date_added is VARCHAR. Parse it. Distinguish from release_year. Growth is defined by percentage change in the question.
+
+  - id: NF02
+    database: netflix_titles
+    title: Genre/category growth and catalogue mix
+    status: profile_first
+    grain: year x category
+    tags: [one_to_many_joins, distinct_counts, multi_stage_aggregation, lag, safe_division]
+    blockers: [profile:category_pair_duplicates]
+    metric_terms: []
+    config_needs: []
+    profile_needs: [netflix_titles_category grain, duplicate show_id/category pairs]
+    oracle: reference_sql
+    caveat: Join needs CAST on show_id (parent DOUBLE, child BIGINT).
+
+  - id: NF03
+    database: netflix_titles
+    title: Director portfolio analysis
+    status: needs_config
+    grain: director x type
+    tags: [join, distinct_aggregation, conditional_aggregation, median, window_ranking]
+    blockers: [config:rating_group]
+    metric_terms: []
+    config_needs: [configured rating group for "rated above"]
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Normalize director cells through netflix_titles_directors. Join needs CAST on show_id.
+
+  - id: NF04
+    database: netflix_titles
+    title: Country and category collaboration
+    status: answerable
+    grain: country x category
+    tags: [one_to_many_relationships, pre_aggregation, count_distinct, conditional_aggregation, median, ctes]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Pre-aggregate each child sheet to avoid fan-out. Median is allowed. Join needs CAST on show_id.
+
+  - id: NF05
+    database: netflix_titles
+    title: Cast breadth and repeat appearances
+    status: answerable
+    grain: cast_member x type, then consecutive year
+    tags: [join, deduplication, ctes, lag, date_sequencing, window_ranking]
+    blockers: []
+    metric_terms: []
+    config_needs: []
+    profile_needs: []
+    oracle: reference_sql
+    caveat: Count distinct cast/title pairs. Join needs CAST on show_id.

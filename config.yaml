@@ -38,13 +38,29 @@ sql_generator_llm:
   temperature: 0
   max_output_tokens: 2048
 
+limits:
+  max_sql_chars: 20000
+  max_ctes: 20
+  max_nesting_depth: 12
+  max_joins: 12
+  max_window_functions: 20
+  query_timeout_seconds: 30
+
 capabilities:
   group_by: true
   having: true
   order_by: true
   date_grains: true
   calculations: true
-  joins: false
+  windows: true
+  case_expressions: true
+  conditional_aggregation: true
+  ranking: true
+  ctes: true
+  subqueries: true
+  set_operations: true
+  percentiles: true
+  joins: true
   simple_sql_builder: false
 
 logging:

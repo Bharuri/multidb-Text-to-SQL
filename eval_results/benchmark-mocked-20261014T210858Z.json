@@ -1,0 +1,4315 @@
+{
+  "run": {
+    "mode": "mocked",
+    "started_at": "2026-10-14T21:08:58+00:00",
+    "finished_at": "2026-10-14T21:09:01+00:00",
+    "models": {
+      "planner": "offline",
+      "sql_generator": "offline"
+    },
+    "questions_file": "specs/retrival/evaluation_question.md",
+    "manifest_file": "tests/benchmark/manifest.yaml"
+  },
+  "summary": {
+    "questions": 30,
+    "response_status": {
+      "cannot_answer": 30
+    },
+    "outcome": {
+      "not_answered": 17,
+      "unexpected_status": 3,
+      "as_expected": 10
+    },
+    "oracle": {
+      "not_run": 17,
+      "no_oracle": 13
+    },
+    "verified": [],
+    "not_answered": [
+      "SS01",
+      "SS02",
+      "SS03",
+      "SS05",
+      "SS07",
+      "SS09",
+      "SS10",
+      "SS11",
+      "SS12",
+      "SS14",
+      "SS15",
+      "SS16",
+      "SS17",
+      "SS18",
+      "NF01",
+      "NF04",
+      "NF05"
+    ],
+    "false_or_unexpected": [
+      "SS04",
+      "SS08",
+      "AB04"
+    ]
+  },
+  "questions": [
+    {
+      "id": "SS01",
+      "title": "Monthly sales and profit with prior-month comparison",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 68.8,
+      "stage_ms": 63.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 16.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 280
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3544
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS02",
+      "title": "Top three sub-categories per region with tie-aware ranking",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 74.4,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 16.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 62.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 852
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4001
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS03",
+      "title": "Customer first order, second order, and elapsed days",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 93.3,
+      "stage_ms": 94.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 63.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 682
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3868
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS04",
+      "title": "Customer cohort retention by first-order month",
+      "database": "sample_superstore",
+      "manifest_status": "clarification",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 78.8,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 682
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3826
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS05",
+      "title": "Pareto contribution of products within each category",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 76.8,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 238
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3444
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS06",
+      "title": "Discount bands and profitability",
+      "database": "sample_superstore",
+      "manifest_status": "needs_config",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "as_expected",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 81.6,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 676
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3923
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS07",
+      "title": "Shipping delay and profitability",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 99.5,
+      "stage_ms": 94.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 32.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 62.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 882
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4110
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS08",
+      "title": "State-level performance against regional baseline",
+      "database": "sample_superstore",
+      "manifest_status": "clarification",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 79.3,
+      "stage_ms": 79.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 32.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 995
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4244
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS09",
+      "title": "Products with sales but persistent loss",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 74.2,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 631
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3857
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS10",
+      "title": "Repeat-customer revenue concentration",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 71.5,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 802
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4025
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS11",
+      "title": "Month-over-month and year-over-year comparison",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 69.8,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 32.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 46.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 204
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3398
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS12",
+      "title": "Order-level discount exposure and profitability",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 74.1,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 697
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3982
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS13",
+      "title": "Customer purchase intervals and irregularity",
+      "database": "sample_superstore",
+      "manifest_status": "gap",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "as_expected",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 81.4,
+      "stage_ms": 94.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 32.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 15.0,
+          "output": {
+            "characters": 609
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3824
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS14",
+      "title": "Sub-category mix shift by year",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 75.4,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 436
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3610
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS15",
+      "title": "Customers buying across categories",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 78.2,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 780
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3976
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS16",
+      "title": "High sales but low profit anomaly detection",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 84.8,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 676
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3925
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS17",
+      "title": "Ship-date versus order-date seasonal analysis",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 79.8,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 32.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 46.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 606
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3844
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "SS18",
+      "title": "Conditional order fulfillment profile",
+      "database": "sample_superstore",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 74.3,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 986
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4208
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "CO01",
+      "title": "Vote outcome patterns by party and session",
+      "database": "_113thCongress",
+      "manifest_status": "profile_first",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "as_expected",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 76.7,
+      "stage_ms": 79.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 32.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 923
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4073
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "CO02",
+      "title": "Bill passage and majority margin",
+      "database": "_113thCongress",
+      "manifest_status": "profile_first",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "as_expected",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 79.4,
+      "stage_ms": 94.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 63.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 1089
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4278
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "CO03",
+      "title": "Sponsor and committee summary",
+      "database": "_113thCongress",
+      "manifest_status": "profile_first",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "as_expected",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 77.4,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 1509
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 4716
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "AB01",
+      "title": "Host portfolio concentration",
+      "database": "airbnb",
+      "manifest_status": "profile_first",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "as_expected",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 43.3,
+      "stage_ms": 31.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 299
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3492
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "AB02",
+      "title": "Price distribution and outliers",
+      "database": "airbnb",
+      "manifest_status": "gap",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "as_expected",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 68.8,
+      "stage_ms": 63.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 63.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 447
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3657
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "AB03",
+      "title": "Host tenure and review performance",
+      "database": "airbnb",
+      "manifest_status": "needs_config",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "as_expected",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 43.6,
+      "stage_ms": 46.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 15.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 332
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3595
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "AB04",
+      "title": "Price versus review rating relationship",
+      "database": "airbnb",
+      "manifest_status": "clarification",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "unexpected_status",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 44.3,
+      "stage_ms": 31.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 16.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 15.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 333
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3599
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "NF01",
+      "title": "Catalogue growth and year-over-year change",
+      "database": "netflix_titles",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 60.5,
+      "stage_ms": 62.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 16.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 46.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 172
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3339
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "NF02",
+      "title": "Genre/category growth and catalogue mix",
+      "database": "netflix_titles",
+      "manifest_status": "profile_first",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "as_expected",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 62.9,
+      "stage_ms": 62.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 15.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 140
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3301
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "NF03",
+      "title": "Director portfolio analysis",
+      "database": "netflix_titles",
+      "manifest_status": "needs_config",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "as_expected",
+      "oracle": {
+        "verdict": "no_oracle"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 63.8,
+      "stage_ms": 62.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 15.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 564
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3773
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "NF04",
+      "title": "Country and category collaboration",
+      "database": "netflix_titles",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 64.1,
+      "stage_ms": 62.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 15.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 715
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3944
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    },
+    {
+      "id": "NF05",
+      "title": "Cast breadth and repeat appearances",
+      "database": "netflix_titles",
+      "manifest_status": "answerable",
+      "response_status": "cannot_answer",
+      "category": "unsupported",
+      "reasons": [
+        "Offline mock run: no model was called."
+      ],
+      "outcome": "not_answered",
+      "oracle": {
+        "verdict": "not_run"
+      },
+      "sql": null,
+      "params": [],
+      "row_count": null,
+      "truncated": null,
+      "wall_ms": 76.8,
+      "stage_ms": 78.0,
+      "stages": [
+        {
+          "stage": "submit",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "resolve_database",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 31.0,
+          "output": {}
+        },
+        {
+          "stage": "load_catalog",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 47.0,
+          "output": {}
+        },
+        {
+          "stage": "retrieve_context",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 647
+          }
+        },
+        {
+          "stage": "build_planner_prompt",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 3891
+          }
+        },
+        {
+          "stage": "planner_llm",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {
+            "characters": 248
+          }
+        },
+        {
+          "stage": "parse_planner_output",
+          "status": "ok",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_plan",
+          "status": "failed",
+          "category": "unsupported",
+          "reason": "Offline mock run: no model was called.",
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "build_sql_prompt",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "sql_generator_llm",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "parse_generated_sql",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "validate_sql_ast",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "execute",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        },
+        {
+          "stage": "format_response",
+          "status": "skipped",
+          "category": null,
+          "reason": null,
+          "duration_ms": 0.0,
+          "output": {}
+        }
+      ],
+      "result_preview": null
+    }
+  ]
+}

@@ -141,4 +141,34 @@ tables:
     nullable: true
     has_nulls: true
     is_unique: false
-relationships: []
+relationships:
+- name: fk_bills_source_url
+  status: approved
+  meaning: Each bill links to one Sunlight record by its source URL. Sunlight_Info has one row per URL
+    after normalization.
+  cardinality: many_to_one
+  enforceable_now: false
+  enabled: true
+  join_policy: left
+  normalization:
+    child:
+    - lower
+    - trim
+    parent:
+    - lower
+    - trim
+  fan_out: none after normalization; Sunlight_Info is unique per normalized URL, and every bill matches
+    exactly one row.
+  child:
+    table: Bills
+    column: Source_URL
+  parent:
+    table: Sunlight_Info
+    column: Source_URL
+  issues:
+  - raw URLs differ in case and whitespace, so a foreign key is not declared on raw values
+  checks:
+  - column: Source_URL
+    child_type: VARCHAR
+    parent_type: VARCHAR
+    orphan_rows: 0
